@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 //CREAZIONE SCHEMA ORDINE
 const ordineSchema = new mongoose.Schema({
     id_ordine:{type:String, required:true, unique:true},
-    tavolo:{type:Number, required:true},
+    id_tavolo:{type:Number, required:true},
     piatti:{type:Array, required:true},
     stato:{type:Boolean, required:true}
 });
@@ -31,4 +31,8 @@ function rimuoviPiattoDaOrdine(ordine, piatto) {
 function aggiornaStatoOrdine(ordine) {
     ordine.stato = !ordine.stato; // Cambia lo stato da true a false o viceversa;
 }
-module.exports = {Ordine, aggiungiPiattoAOrdine, rimuoviPiattoDaOrdine};
+//FUNZIONE SCEGLI TAVOLO
+function scegliTavolo(id_tavolo){
+    this.id_tavolo = id_tavolo
+}
+module.exports = {Ordine, aggiungiPiattoAOrdine, rimuoviPiattoDaOrdine,scegliTavolo};
