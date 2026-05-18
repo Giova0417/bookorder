@@ -33,14 +33,14 @@ function Body() {
           display: 'inline-block',
           backgroundColor: '#ff8400',
           color: 'white',
-          fontSize: '18px', 
+          fontSize: '22px', 
           fontWeight: 'bold',
           px: 2, py: 0.5,
           borderRadius: '20px',
           mb: 2,
           letterSpacing: '1.5px',
         }}>
-          🔥 NOVITÀ DEL MESE
+           NOVITÀ DEL MESE
         </Box>
 
         <Typography sx={{
@@ -48,7 +48,7 @@ function Body() {
           fontWeight: 900,
           mb: 2,
           color: '#ffffff',
-          fontSize: { xs: '2.2rem', md: '3.2rem' },
+          fontSize: { xs: '2.2rem', md: '3.2rem',xl:'6rem'},
           lineHeight: 1.05,
           textTransform: 'uppercase',
           letterSpacing: 0,
@@ -66,7 +66,7 @@ function Body() {
           maxWidth: '420px',
         }}>
           Due succulenti hamburger, cheddar fuso, lattuga fresca e salsa speciale
-          in un morbido panino. Vieni a provarlo oggi stesso!
+          in un morbido panino. Riserva il tuo tavolo!
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
@@ -83,11 +83,8 @@ function Body() {
             },
             transition: 'all 0.2s',
           }}>
-            Ordina Ora
+            Prenota ora
           </Button>
-          <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>
-            ⏱ Pronto in 20 min
-          </Typography>
         </Box>
       </Box>
 

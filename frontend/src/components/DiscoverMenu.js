@@ -2,6 +2,8 @@ import React, { useRef } from 'react';
 import { Box, Typography, Button, Card, CardContent, IconButton } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { Link } from 'react-router-dom';
+
 
 const piatti = [
   {
@@ -75,7 +77,7 @@ function DiscoverMenu() {
           <Typography variant="overline" sx={{ color: '#ff8400', letterSpacing: 3 }}>
             DA NON PERDERE
           </Typography>
-          <Typography variant="h3" sx={{ color: '#ffffff', fontWeight: 900, mt: 1 }}>
+          <Typography variant="h3" sx={{ color: '#ffffff', fontWeight: 900, mt: 1, textTransform: 'uppercase'}}>
             Scopri il Menu
           </Typography>
         </Box>
@@ -190,7 +192,10 @@ function DiscoverMenu() {
 
       {/* Bottone vedi tutto */}
       <Box sx={{ textAlign: 'center', mt: 6 }}>
-        <Button variant="outlined" sx={{
+        <Button variant="outlined"
+        component={Link}
+        to="/menu"
+        sx={{
           color: '#ff8400',
           borderColor: '#ff8400',
           borderRadius: '300px',
