@@ -7,7 +7,7 @@ import PersonIcon from '@mui/icons-material/Person';
 function Navbar() {
   return (
     // AppBar Piazzata in alto che conterrà altri elementi
-    <AppBar position="sticky" color="warning">
+    <AppBar position="fixed" color="warning">
       <Toolbar>
         {/* L'icona del menu a sinistra */}
         <IconButton size="large" edge="start" color="inherit"  sx={{ mr: 2 }}>

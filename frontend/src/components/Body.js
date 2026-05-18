@@ -1,25 +1,25 @@
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
-import photoBody from '../assets/BodyPng.jpg';
+import burger from '../assets/Burger.png';
 
 function Body() {
   return (
     <Box
       sx={{
         width: '100%',
-        height: '100vh',
-        backgroundImage: `url(${photoBody})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #1a0a00 0%, #8B1a00 50%, #c0392b 100%)',
+        backgroundAttachment: 'fixed',
         display: 'flex',
         alignItems: 'center',
         color: '',
+        justifyContent: 'space-between', // Spaziatura tra testo e immagine
       }}
     >
-      {/* Niente Container — usiamo Box diretto con paddingLeft fisso */}
+      {/* usiamo Box diretto con paddingLeft fisso */}
       <Box
         sx={{
-          maxWidth: '480px',
+          width: '50%',
           paddingLeft: { xs: '24px', md: '80px' },
           paddingRight: '24px',
         }}
@@ -36,6 +36,18 @@ function Body() {
           Ordina Ora
         </Button>
       </Box>
+        {/* Immagine del burger a destra, con dimensioni fisse e margine */}
+        <Box
+          component="img"
+          src={burger}
+           sx={{
+              position: 'absolute',
+              left: '50%',      // esce dal bordo destro
+              width: '82%',
+              height: 'auto',
+            
+  }}
+        />
     </Box>
   );
 }
