@@ -32,7 +32,7 @@ function aggiornaStatoOrdine(ordine) {
     ordine.stato = !ordine.stato; // Cambia lo stato da true a false o viceversa;
 }
 //FUNZIONE SCEGLI TAVOLO
-function scegliTavolo(id_tavolo){
-    this.id_tavolo = id_tavolo
+function scegliTavolo(ordine,id_tavolo){
+    ordine.id_tavolo = id_tavolo
 }
 module.exports = {Ordine, aggiungiPiattoAOrdine, rimuoviPiattoDaOrdine,scegliTavolo};

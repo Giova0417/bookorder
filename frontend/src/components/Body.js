@@ -4,50 +4,110 @@ import burger from '../assets/Burger.png';
 
 function Body() {
   return (
-    <Box
-      sx={{
-        width: '100%',
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #1a0a00 0%, #8B1a00 50%, #c0392b 100%)',
-        backgroundAttachment: 'fixed',
-        display: 'flex',
-        alignItems: 'center',
-        color: '',
-        justifyContent: 'space-between', // Spaziatura tra testo e immagine
-      }}
-    >
-      {/* usiamo Box diretto con paddingLeft fisso */}
-      <Box
-        sx={{
-          width: '50%',
-          paddingLeft: { xs: '24px', md: '80px' },
-          paddingRight: '24px',
-        }}
-      >
-        <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 2, color: '#ff8400' ,textShadow: '2px 2px 4px rgba(176, 181, 164, 0.7)'}}>
-          Prova la novità del mese Double Beef Burger!
+    <Box sx={{
+      // REGOLE ANTI-SCORRIMENTO DEFINITIVE
+      width:'100%',
+      maxWidth: '100vw',
+      minHeight: {xs : '60vh', md : '70vh'},
+      background: 'linear-gradient(135deg, #ff6200 0%, #835b27 50%, #2d2825 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      position: 'relative',
+      overflow: 'hidden',
+      boxSizing: 'border-box'
+
+    }}>
+
+      {/* TESTO */}
+      <Box sx={{
+        width: { xs: '100%', md: '48%' },
+        paddingLeft: { xs: '32px', md: '80px' },
+        paddingRight: { xs: '32px', md: '0' },
+        paddingTop: { xs: '60px', md: '0' },
+        paddingBottom: { xs: '300px', md: '0' }, //il burger si sposta sotto
+        boxSizing: 'border-box'
+      }}>
+
+        {/* Badge */}
+        <Box sx={{
+          display: 'inline-block',
+          backgroundColor: '#ff8400',
+          color: 'white',
+          fontSize: '18px', 
+          fontWeight: 'bold',
+          px: 2, py: 0.5,
+          borderRadius: '20px',
+          mb: 2,
+          letterSpacing: '1.5px',
+        }}>
+          🔥 NOVITÀ DEL MESE
+        </Box>
+
+        <Typography sx={{
+          fontFamily: '"Arial Black", Impact, sans-serif',
+          fontWeight: 900,
+          mb: 2,
+          color: '#ffffff',
+          fontSize: { xs: '2.2rem', md: '3.2rem' },
+          lineHeight: 1.05,
+          textTransform: 'uppercase',
+          letterSpacing: 0,
+          textShadow: '0 4px 0 rgba(0,0,0,0.18), 0 14px 30px rgba(0,0,0,0.35)',
+          maxWidth: '520px',
+        }}>
+          Double Beef Burger
         </Typography>
-        <Typography variant="h5" sx={{ mb: 4, color: '#ffffff' , textShadow: '2px 2px 4px rgba(176, 181, 164, 0.7)'}}>
-          Un'esplosione di gusto con due succulenti hamburger di carne, formaggio fuso,
-          lattuga fresca e salsa speciale, il tutto racchiuso in un morbido panino.
-          Vieni a provarlo oggi stesso!
+
+        <Typography sx={{
+          mb: 4,
+          color: 'rgba(255,255,255,0.8)',
+          fontSize: { xs: '1rem', md: '1.15rem' },
+          lineHeight: 1.7,
+          maxWidth: '420px',
+        }}>
+          Due succulenti hamburger, cheddar fuso, lattuga fresca e salsa speciale
+          in un morbido panino. Vieni a provarlo oggi stesso!
         </Typography>
-        <Button variant="contained" color="warning"  sx={{ height: '50px', width: '60%', borderRadius: '300px', fontSize: '18px' }}>
-          Ordina Ora
-        </Button>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Button variant="contained" color="warning" sx={{
+            height: '52px',
+            px: 4,
+            borderRadius: '300px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            boxShadow: '0 8px 24px rgba(255,132,0,0.4)',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: '0 12px 32px rgba(255,132,0,0.6)',
+            },
+            transition: 'all 0.2s',
+          }}>
+            Ordina Ora
+          </Button>
+          <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>
+            ⏱ Pronto in 20 min
+          </Typography>
+        </Box>
       </Box>
-        {/* Immagine del burger a destra, con dimensioni fisse e margine */}
-        <Box
-          component="img"
-          src={burger}
-           sx={{
-              position: 'absolute',
-              left: '50%',      // esce dal bordo destro
-              width: '82%',
-              height: 'auto',
-            
-  }}
-        />
+
+      {/* BURGER */}
+      <Box
+        component="img"
+        src={burger}
+        sx={{
+          position: 'absolute',
+          right: { xs: 'auto', md: '0' },
+          left: { xs: '50%', md: 'unset' },
+          bottom: { xs: '20px', md: 'auto' },
+          transform: { xs: 'translateX(-50%)', md: 'none' },
+          width: { xs: '100%', md: '55%' },
+          maxWidth: { xs: '800px', md: 'none' },
+          height: 'auto',
+          filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.6))',
+          zIndex: 1,
+        }}
+      />
     </Box>
   );
 }
