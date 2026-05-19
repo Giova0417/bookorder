@@ -1,7 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Grid, Box, Typography, Card, CardContent, Button } from '@mui/material';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 const prodottiMenu = [
     {
         id: 1,
@@ -259,13 +257,13 @@ function Menu() {
             position: 'relative',
             overflow: 'hidden',
             boxSizing: 'border-box',
+
         }}>
             <Box sx={{
-                transform: 'translateY(-6px)',
                 display: { xs: 'grid', md: 'flex' },
                 gap: 2,
                 gridTemplateColumns: {
-                    xs: 'repeat(2, 1fr)',
+                    xs: 'repeat(3, 1fr)',
                     sm: 'repeat(3, 1fr)',
                 },
             }}>
@@ -289,6 +287,9 @@ function Menu() {
                                 '&:hover': {
                                     backgroundColor: categoriaSelezionata === categoria ? '#ff8400' : '#6e441f',
                                     color: categoriaSelezionata === categoria ? '#000000' : '#ff8400',
+                                    transform: 'translateX(3px)',
+                                    border: '5px solid #ff9100',
+                                    boxShadow: '0 12px 40px rgba(255,132,0,0.2)',
                                 },
                             }}>
                             {categoria}

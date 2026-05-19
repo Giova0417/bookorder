@@ -5,6 +5,7 @@ import DiscoverMenu from './components/DiscoverMenu';
 import { Box, Toolbar } from '@mui/material';
 import Menu from './components/Menu';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Login from './components/Login'
 
 function HomePage() {
   return (
@@ -14,7 +15,6 @@ function HomePage() {
     </>
   );
 }
-
 function App() {
   return (
     <>
@@ -25,6 +25,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/menu" element={<Menu />} />
+          <Route path="/login" element={<Login />}/>
       </Routes>
       </Box>
       </BrowserRouter>

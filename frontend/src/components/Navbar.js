@@ -3,6 +3,7 @@ import React from 'react';
 import { AppBar, Toolbar, Typography,IconButton } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import PersonIcon from '@mui/icons-material/Person';
+import { Link } from 'react-router-dom';
 
 function Navbar() {
   return (
@@ -23,7 +24,10 @@ function Navbar() {
           Book&Order
         </Typography>
         {/* Il pulsante di Login a destra */}
-        <IconButton color="inherit" size='large' >
+        <IconButton color="inherit" size='large' 
+          component={Link}
+          to='/login'
+        >
          <PersonIcon sx={{ fontSize: 28 }}/>  
         </IconButton>
       </Toolbar>

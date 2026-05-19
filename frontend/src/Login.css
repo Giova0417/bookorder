@@ -1,0 +1,17 @@
+.MuiInput-root::after {
+    border-bottom-color: #f3f3f3 !important;
+    border-bottom-width: 2px !important;
+}
+
+
+/* CAMBIA IL COLORE DELLA SCRITTA QUANDO CLICCHI */
+.MuiInputLabel-root.Mui-focused {
+    color: #ffffff !important;
+    margin: auto;
+}
+.MuiInputLabel-standard {
+    left: 16px !important; 
+}
+.MuiInput-input {
+    padding-left: 16px !important; 
+}
