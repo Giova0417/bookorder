@@ -47,15 +47,12 @@ function Register() {
 
     return (
         <Box sx={{
-            width: '100%',
-            minHeight: '100vh',
-            background: 'linear-gradient(135deg, #ff6200 0%, #835b27 40%, #654a39 100%)',
+            background: 'linear-gradient(135deg, #ff8400 0%, #e89211 50%, #2d2825 100%)',
+            height: '100vh',
+            py: { xs: '20%', md: '5%' },
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            px: { xs: 3, md: 10 },
-            py: { xs: 6, md: 8 },
-            boxSizing: 'border-box',
+            justifyContent: 'center'
         }}>
             <Card sx={{
                 width: '100%',
