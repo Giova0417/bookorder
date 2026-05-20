@@ -4,7 +4,7 @@ const utenteSchema = new mongoose.Schema({
     name:{type:String, required:true},
     email:{type:String, required:true, unique:true},
     password:{type:String, required:true},
-    tipo:{type:String, required:true} // cliente, cameriere, cuoco
+    ///tipo:{type:String, required:true} // cliente, cameriere, cuoco
 });
 const Utente = mongoose.model('Utente', utenteSchema);
 module.exports = Utente;

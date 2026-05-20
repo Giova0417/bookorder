@@ -122,6 +122,7 @@ function DiscoverMenu() {
           px: { xs: 3, md: 0 },
           mx: { xs: -3, md: 0 },
           pb: { xs: 2, md: 0 },
+          pt:'6px',
           scrollbarWidth: 'none',
           '&::-webkit-scrollbar': {
             display: 'none'

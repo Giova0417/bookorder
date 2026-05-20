@@ -277,7 +277,7 @@ function Menu() {
                                 width: '100%',
                                 minHeight: { xs: '52px', sm: '50px' },
                                 fontWeight: 'bold',
-                                color: categoriaSelezionata === categoria ? '#000000' : '#ff8400',
+                                color: categoriaSelezionata === categoria ? '#ffffff' : '#ff8400',
                                 borderColor: '#ff8400',
                                 borderRadius: { xs: '30px', md: '300px' },
                                 backgroundColor: categoriaSelezionata === categoria ? '#ff8400' : 'transparent',
@@ -286,7 +286,7 @@ function Menu() {
                                 fontSize: { xs: '10px', sm: '12px', md: '15px' },
                                 '&:hover': {
                                     backgroundColor: categoriaSelezionata === categoria ? '#ff8400' : '#6e441f',
-                                    color: categoriaSelezionata === categoria ? '#000000' : '#ff8400',
+                                    color: categoriaSelezionata === categoria ? '#ffffff' : '#ff8400',
                                     transform: 'translateX(3px)',
                                     border: '5px solid #ff9100',
                                     boxShadow: '0 12px 40px rgba(255,132,0,0.2)',

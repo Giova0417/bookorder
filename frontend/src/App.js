@@ -6,6 +6,7 @@ import { Box, Toolbar } from '@mui/material';
 import Menu from './components/Menu';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './components/Login'
+import Register from './components/Register'
 
 function HomePage() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/login" element={<Login />}/>
+          <Route path="/register" element={<Register />}/>
       </Routes>
       </Box>
       </BrowserRouter>
