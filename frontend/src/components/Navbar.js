@@ -1,17 +1,53 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 // Importiamo Material UI
-import { AppBar, Toolbar, Typography,IconButton } from '@mui/material';
+import { AppBar, Toolbar, Typography, IconButton, Button } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import PersonIcon from '@mui/icons-material/Person';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 function Navbar() {
+  const [utente, setUtente] = useState(null);
+  const location = useLocation();
+  const VerifySession = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setUtente(null);
+      return;
+    }
+    try{
+    const risposta = await fetch('http://localhost:5000/api/auth/me', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
+    if (!risposta.ok) {
+      localStorage.removeItem('token');
+      setUtente(null);
+      return;
+    }
+    const dati = await risposta.json();
+    setUtente(dati.utente);
+  }catch(errore){
+    setUtente(null)
+  }
+  };
+
+  useEffect(() => {
+
+    VerifySession();
+  }, [location.pathname]);
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUtente(null);
+  };
   return (
-    // AppBar Piazzata in alto che conterrà altri elementi
-    <AppBar position="fixed" color="warning" sx={{maxWidth:'100%',background:'linear-gradient(135deg, #000000 0%, #1c1816 50%, #000000 100%)',}}>
+    // AppBar 
+    <AppBar position="fixed" color="warning" sx={{ maxWidth: '100%', background: 'linear-gradient(135deg, #000000 0%, #1c1816 50%, #000000 100%)', }}>
       <Toolbar>
         {/* L'icona del menu a sinistra */}
-        <IconButton size="large" edge="start" color="inherit"  sx={{ mr: 2 }}>
+        <IconButton size="large" edge="start" color="inherit" component={Link}
+          to='/' sx={{ mr: 2 }}>
           <MenuIcon />
         </IconButton>
         <Typography variant="h4" component="div" sx={{
@@ -24,12 +60,20 @@ function Navbar() {
           Book&Order
         </Typography>
         {/* Il pulsante di Login a destra */}
-        <IconButton color="inherit" size='large' 
-          component={Link}
-          to='/login'
-        >
-         <PersonIcon sx={{ fontSize: 28 }}/>  
-        </IconButton>
+        {utente ? (
+          <Button color="inherit" onClick={handleLogout}>
+            Esci
+          </Button>
+        ) : (
+          <IconButton
+            color="inherit"
+            size="large"
+            component={Link}
+            to="/login"
+          >
+            <PersonIcon sx={{ fontSize: 28 }} />
+          </IconButton>
+        )}
       </Toolbar>
     </AppBar>
   );

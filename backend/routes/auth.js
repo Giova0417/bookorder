@@ -13,6 +13,26 @@ function creaToken(utente) {
     { expiresIn: '7d' }
   );
 }
+router.get('/me', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token mancante' })
+    }
+    const datiToken = jwt.verify(token, process.env.JWT_SECRET)
+    const utente = await Utente.findById(datiToken.id).select('-password');
+
+    if (!utente) {
+      return res.status(401).json({ message: 'Utente non esiste piu' });
+    }
+    return res.status(200).json({ utente });
+
+  } catch (errore) {
+    return res.status(401).json({ message: 'Token non valido o scaduto' })
+  }
+})
+
+
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;

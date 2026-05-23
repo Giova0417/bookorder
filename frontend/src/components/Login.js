@@ -1,9 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 import '../Login.css';
-import { Box, Typography, TextField, Card, CardContent, Button } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Box, Typography, TextField, Card, CardContent, Button , Alert} from '@mui/material';
+import { Link, useNavigate } from 'react-router-dom';
 
 function Login() {
+   const [errore, setErrore] = useState('');
+   const [email, setEmail] = useState('');
+   const [password, setPassword] = useState('');
+   const navigate = useNavigate();
+
+   const handleLogin = async () => {
+      try {
+         setErrore('');
+         const risposta = await fetch('http://localhost:5000/api/auth/login', {
+            method: 'POST',
+            headers: {
+               'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+               email,
+               password,
+            })
+
+         });
+         const dati = await risposta.json();
+         if (!risposta.ok) {
+            setErrore(dati.message || 'Login non riuscito');
+            setTimeout(() => {
+               setErrore('');
+            }, 3000);
+            return;
+         }
+
+         localStorage.setItem('token', dati.token);
+         navigate('/menu');
+
+      } catch (error) {
+         setErrore('Errore di connessione al server');
+         setTimeout(() => {
+            setErrore('');
+         }, 3000);
+      }
+   }
    return (
       <Box sx={{
          background: 'linear-gradient(135deg, #ff8400 0%, #e89211 50%, #2d2825 100%)',
@@ -53,9 +91,12 @@ function Login() {
                <TextField label="Email"
                   variant="standard"
                   fullWidth
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                   sx={{ p: 2, background: 'rgb(255, 255, 255)', borderRadius: 5 }} />
-               <TextField label="Password" type="password" fullWidth variant="standard" sx={{ p: 2, bgcolor: 'rgb(255, 255, 255)', borderRadius: 5 }} />
-
+               <TextField value={password}
+                  onChange={(event) => setPassword(event.target.value)} label="Password" type="password" fullWidth variant="standard" sx={{ p: 2, bgcolor: 'rgb(255, 255, 255)', borderRadius: 5 }} />
+               {errore && <Alert severity="error">{errore}</Alert>}
             </CardContent>
             <Box sx={{
                p: 2,
@@ -67,7 +108,7 @@ function Login() {
                gap: 1,
                flexWrap: 'wrap',
             }}>
-               <Button variant="contained" fullWidth sx={{
+               <Button variant="contained" fullWidth onClick={handleLogin} sx={{
                   background: '#ff8400',
                   color: '#000000',
                   borderRadius: '300px',
