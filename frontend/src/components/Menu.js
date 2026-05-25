@@ -237,14 +237,15 @@ const prodottiMenu = [
 
 
 const categorie = ['Burger', 'Panini speciali', 'Bevande', 'Fritti', 'Salse', 'Dolci'];
-
 function Menu() {
     const [prodottiMenuFiltered, setProdottiMenuFiltered] = useState([]);
     const [categoriaSelezionata, setCategoriaSelezionata] = useState('Burger');
+    const [quantita, setQuantita] = useState({});
 
     useEffect(() => {
         setProdottiMenuFiltered(prodottiMenu.filter(prodotto => prodotto.categoria.toLowerCase() === categoriaSelezionata.toLowerCase()));
     }, [categoriaSelezionata]);
+
 
     return (
 
@@ -279,16 +280,15 @@ function Menu() {
                                 fontWeight: 'bold',
                                 color: categoriaSelezionata === categoria ? '#ffffff' : '#ff8400',
                                 borderColor: '#ff8400',
+                                border: '0px',
                                 borderRadius: { xs: '30px', md: '300px' },
                                 backgroundColor: categoriaSelezionata === categoria ? '#ff8400' : 'transparent',
                                 px: 4,
                                 py: 1.5,
-                                fontSize: { xs: '10px', sm: '12px', md: '15px' },
+                                fontSize: { xs: '12px', sm: '12px', md: '15px' },
                                 '&:hover': {
                                     backgroundColor: categoriaSelezionata === categoria ? '#ff8400' : '#6e441f',
                                     color: categoriaSelezionata === categoria ? '#ffffff' : '#ff8400',
-                                    transform: 'translateX(3px)',
-                                    border: '5px solid #ff9100',
                                     boxShadow: '0 12px 40px rgba(255,132,0,0.2)',
                                 },
                             }}>
@@ -359,20 +359,50 @@ function Menu() {
                                     {prodotto.nome}
                                 </Typography>
 
-                                <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', flexGrow: 1, mb: 2 }}>
+                                <Typography sx={{height:'44px',color: 'rgba(255,255,255,0.5)', fontSize: '13px',mb: 2 }}>
                                     {prodotto.desc}
                                 </Typography>
 
                                 <Typography sx={{ color: '#ff8400', fontWeight: 900, fontSize: '20px' }}>
                                     {prodotto.prezzo}
                                 </Typography>
+                                <Box sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 3,
+                                }}>
+                                    <Button onClick={() =>
+                                        setQuantita({
+                                            ...quantita,
+                                            [prodotto.id]: Math.max(0, (quantita[prodotto.id]|| 0)-1 )
+                                        })
+                                    } sx={{
+                                        backgroundColor: '#1a1a1a', fontWeight: 900, fontSize: '30px', color: '#ff8400', borderRadius: '10px', width: '20%', maxHeight: '5vh', display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center"
+                                    }}>
+                                        −
+                                    </Button>
+                                    <Typography sx={{ color: '#ffffff', fontWeight: 900, fontSize: '25px' }}>
+                                        {quantita[prodotto.id] || 0}
+                                    </Typography>
+                                    <Button onClick={() =>
+                                        setQuantita({
+                                            ...quantita,
+                                            [prodotto.id]: (quantita[prodotto.id] || 0) +1
+                                        })
+                                    } sx={{ backgroundColor: '#1a1a1a', fontWeight: 900, fontSize: '30px', color: '#ff8400', borderRadius: '10px', width: '20%', maxHeight: '5vh' }}>
+                                        +
+                                    </Button>
+                                </Box>
                             </CardContent>
                         </Card>
                     </Grid>
                 ))}
 
             </Grid>
-        </Box>
+        </Box >
     );
 }
 

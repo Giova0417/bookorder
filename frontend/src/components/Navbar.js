@@ -1,36 +1,48 @@
 import React, { useEffect, useState } from 'react';
 // Importiamo Material UI
-import { AppBar, Toolbar, Typography, IconButton, Button } from '@mui/material';
+import {Grow, Box, AppBar, Toolbar, Typography, IconButton, Button, Popover } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import PersonIcon from '@mui/icons-material/Person';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { Link, useLocation } from 'react-router-dom';
+
 
 function Navbar() {
   const [utente, setUtente] = useState(null);
   const location = useLocation();
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartAnchor, setCartAnchor] = useState(null);
+  const handleCartClick = (event) => {
+    setCartAnchor(event.currentTarget);
+    setCartOpen(true);
+  };
+  const handleCartClose = () => {
+    setCartOpen(false);
+    setCartAnchor(null);
+  };
   const VerifySession = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       setUtente(null);
       return;
     }
-    try{
-    const risposta = await fetch('http://localhost:5000/api/auth/me', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
+    try {
+      const risposta = await fetch('http://localhost:5000/api/auth/me', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+      if (!risposta.ok) {
+        localStorage.removeItem('token');
+        setUtente(null);
+        return;
       }
-    });
-    if (!risposta.ok) {
-      localStorage.removeItem('token');
-      setUtente(null);
-      return;
+      const dati = await risposta.json();
+      setUtente(dati.utente);
+    } catch (errore) {
+      setUtente(null)
     }
-    const dati = await risposta.json();
-    setUtente(dati.utente);
-  }catch(errore){
-    setUtente(null)
-  }
   };
 
   useEffect(() => {
@@ -59,12 +71,83 @@ function Navbar() {
         }}>
           Book&Order
         </Typography>
-        {/* Il pulsante di Login a destra */}
+        {/* I pulsanti di Login e carrello a destra */}
+        <IconButton color="inherit"
+          size="large"
+          onClick={handleCartClick}>
+          <ShoppingCartIcon />
+        </IconButton>
+        <Popover
+          slotProps={{
+            paper: {
+              sx: {
+                mt: 1,
+                width: { xs: 'calc(100vw - 32px)', sm: 340 },
+                backgroundColor: '#151515',
+                color: '#fff',
+                border: '1px solid rgba(255, 132, 0, 0.45)',
+                borderRadius: '14px',
+                boxShadow: '0 18px 45px rgba(0,0,0,0.55)',
+                overflow: 'hidden'
+              }
+            }
+          }}
+          TransitionComponent={Grow}
+          transitionDuration={400}
+          open={cartOpen}
+          anchorEl={cartAnchor}
+          onClose={handleCartClose}
+          disableScrollLock
+          anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "right"
+          }}
+          transformOrigin={{
+            vertical: "top",
+            horizontal: 'right'
+          }}>
+          <Box sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: 20 }}>
+                Carrello
+              </Typography>
+
+              <Typography sx={{ color: '#ff8400', fontWeight: 700, fontSize: 13 }}>
+                0 articoli
+              </Typography>
+            </Box>
+
+            <Box sx={{ my: 2, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
+
+            <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, textAlign: 'center', py: 3 }}>
+              Il carrello è vuoto
+            </Typography>
+
+            <Box sx={{ my: 2, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
+
+            <Button
+              fullWidth
+              variant="contained"
+              sx={{
+                backgroundColor: '#ff8400',
+                color: '#111',
+                fontWeight: 900,
+                borderRadius: '10px',
+                '&:hover': {
+                  backgroundColor: '#ff9d2e',
+                }
+              }}
+            >
+              Vai all'ordine
+            </Button>
+          </Box>
+        </Popover>
         {utente ? (
           <Button color="inherit" onClick={handleLogout}>
             Esci
           </Button>
         ) : (
+
           <IconButton
             color="inherit"
             size="large"
@@ -73,7 +156,9 @@ function Navbar() {
           >
             <PersonIcon sx={{ fontSize: 28 }} />
           </IconButton>
+
         )}
+
       </Toolbar>
     </AppBar>
   );
