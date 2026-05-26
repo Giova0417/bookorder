@@ -44,7 +44,7 @@ function Login() {
    }
    return (
       <Box sx={{
-         background: 'linear-gradient(135deg, #ff8400 0%, #e89211 50%, #2d2825 100%)',
+         background: 'linear-gradient(135deg, #ff6200 0%, #835b27 50%, #2d2825 100%)',
          height: '100vh',
          py: { xs: '20%', md: '5%' },
          display: 'flex',

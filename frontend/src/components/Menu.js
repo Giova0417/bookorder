@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, Box, Typography, Card, CardContent, Button } from '@mui/material';
+import { Grid, Box, Typography, Card, CardContent, Button, IconButton } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import { useCart } from './CartContext';
 const prodottiMenu = [
     {
         id: 1,
         nome: 'Classic Burger',
         categoria: 'Burger',
         desc: 'Hamburger di manzo, lattuga, pomodoro, cheddar e salsa burger.',
-        prezzo: '7,50 EUR',
+        prezzo: 7.50,
         img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -14,7 +17,7 @@ const prodottiMenu = [
         nome: 'Double Beef Burger',
         categoria: 'Burger',
         desc: 'Doppio hamburger di manzo, doppio cheddar, lattuga e salsa speciale.',
-        prezzo: '9,00 EUR',
+        prezzo: 9.00,
         img: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -22,7 +25,7 @@ const prodottiMenu = [
         nome: 'BBQ Bacon Burger',
         categoria: 'Burger',
         desc: 'Manzo, bacon croccante, cheddar, cipolla caramellata e salsa BBQ.',
-        prezzo: '9,50 EUR',
+        prezzo: 9.50,
         img: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -30,7 +33,7 @@ const prodottiMenu = [
         nome: 'Crispy Chicken Burger',
         categoria: 'Burger',
         desc: 'Pollo croccante, lattuga, pomodoro e maionese.',
-        prezzo: '8,50 EUR',
+        prezzo: 8.50,
         img: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -38,7 +41,7 @@ const prodottiMenu = [
         nome: 'Spicy Jalapeno Burger',
         categoria: 'Burger',
         desc: 'Manzo, cheddar, jalapeno, insalata e salsa piccante.',
-        prezzo: '9,20 EUR',
+        prezzo: 9.20,
         img: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -46,7 +49,7 @@ const prodottiMenu = [
         nome: 'Veggie Burger',
         categoria: 'Burger',
         desc: 'Burger vegetale, lattuga, pomodoro, cipolla e salsa yogurt.',
-        prezzo: '8,00 EUR',
+        prezzo: 8.00,
         img: 'https://images.unsplash.com/photo-1520072959219-c595dc870360?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -54,7 +57,7 @@ const prodottiMenu = [
         nome: 'Pulled Pork Sandwich',
         categoria: 'Panini Speciali',
         desc: 'Maiale sfilacciato, coleslaw e salsa BBQ.',
-        prezzo: '8,80 EUR',
+        prezzo: 8.80,
         img: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -62,7 +65,7 @@ const prodottiMenu = [
         nome: 'Chicken Club',
         categoria: 'Panini Speciali',
         desc: 'Pollo grigliato, bacon, lattuga, pomodoro e maionese.',
-        prezzo: '8,20 EUR',
+        prezzo: 8.20,
         img: 'https://images.unsplash.com/photo-1550507992-eb63ffee0847?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -70,7 +73,7 @@ const prodottiMenu = [
         nome: 'Hot Dog Deluxe',
         categoria: 'Panini Speciali',
         desc: 'Wurstel, cheddar, cipolla croccante, ketchup e senape.',
-        prezzo: '6,50 EUR',
+        prezzo: 6.50,
         img: 'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -78,7 +81,7 @@ const prodottiMenu = [
         nome: 'Patatine Classiche',
         categoria: 'Fritti',
         desc: 'Patatine fritte croccanti con sale.',
-        prezzo: '3,00 EUR',
+        prezzo: 3.00,
         img: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -86,7 +89,7 @@ const prodottiMenu = [
         nome: 'Patatine Cheddar & Bacon',
         categoria: 'Fritti',
         desc: 'Patatine con cheddar fuso e bacon croccante.',
-        prezzo: '4,50 EUR',
+        prezzo: 4.50,
         img: 'https://images.unsplash.com/photo-1585109649139-366815a0d713?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -94,7 +97,7 @@ const prodottiMenu = [
         nome: 'Onion Rings',
         categoria: 'Fritti',
         desc: 'Anelli di cipolla fritti e croccanti.',
-        prezzo: '3,80 EUR',
+        prezzo: 3.80,
         img: 'https://images.unsplash.com/photo-1639024471283-03518883512d?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -102,7 +105,7 @@ const prodottiMenu = [
         nome: 'Chicken Nuggets',
         categoria: 'Fritti',
         desc: 'Bocconcini di pollo croccanti con salsa a scelta.',
-        prezzo: '4,50 EUR',
+        prezzo: 4.50,
         img: 'https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -110,7 +113,7 @@ const prodottiMenu = [
         nome: 'Mozzarella Sticks',
         categoria: 'Fritti',
         desc: 'Bastoncini di mozzarella filante impanati.',
-        prezzo: '4,20 EUR',
+        prezzo: 4.20,
         img: 'https://images.unsplash.com/photo-1625938144755-652e08e359b7?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -118,7 +121,7 @@ const prodottiMenu = [
         nome: 'Salsa Burger',
         categoria: 'Salse',
         desc: 'Salsa cremosa della casa.',
-        prezzo: '0,50 EUR',
+        prezzo: 0.50,
         img: 'https://images.unsplash.com/photo-1472476443507-c7a5948772fc?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -126,7 +129,7 @@ const prodottiMenu = [
         nome: 'Salsa BBQ',
         categoria: 'Salse',
         desc: 'Salsa affumicata dolce.',
-        prezzo: '0,50 EUR',
+        prezzo: 0.50,
         img: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -134,7 +137,7 @@ const prodottiMenu = [
         nome: 'Salsa Piccante',
         categoria: 'Salse',
         desc: 'Salsa spicy per burger e fritti.',
-        prezzo: '0,50 EUR',
+        prezzo: 0.50,
         img: 'https://images.unsplash.com/photo-1588252303782-cb80119abd6d?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -142,7 +145,7 @@ const prodottiMenu = [
         nome: 'Maionese',
         categoria: 'Salse',
         desc: 'Classica maionese.',
-        prezzo: '0,30 EUR',
+        prezzo: 0.30,
         img: 'https://images.unsplash.com/photo-1627485937980-221c88ac04f9?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -150,7 +153,7 @@ const prodottiMenu = [
         nome: 'Ketchup',
         categoria: 'Salse',
         desc: 'Classico ketchup.',
-        prezzo: '0,30 EUR',
+        prezzo: 0.30,
         img: 'https://images.unsplash.com/photo-1633436375795-12b3b339712f?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -158,7 +161,7 @@ const prodottiMenu = [
         nome: 'Acqua Naturale',
         categoria: 'Bevande',
         desc: 'Bottiglia 50 cl.',
-        prezzo: '1,20 EUR',
+        prezzo: 1.20,
         img: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -166,7 +169,7 @@ const prodottiMenu = [
         nome: 'Acqua Frizzante',
         categoria: 'Bevande',
         desc: 'Bottiglia 50 cl.',
-        prezzo: '1,20 EUR',
+        prezzo: 1.20,
         img: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -174,7 +177,7 @@ const prodottiMenu = [
         nome: 'Coca-Cola',
         categoria: 'Bevande',
         desc: 'Lattina 33 cl.',
-        prezzo: '2,50 EUR',
+        prezzo: 2.50,
         img: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -182,7 +185,7 @@ const prodottiMenu = [
         nome: 'Fanta',
         categoria: 'Bevande',
         desc: 'Lattina 33 cl.',
-        prezzo: '2,50 EUR',
+        prezzo: 2.50,
         img: 'https://images.unsplash.com/photo-1624517452488-04869289c4ca?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -190,7 +193,7 @@ const prodottiMenu = [
         nome: 'Sprite',
         categoria: 'Bevande',
         desc: 'Lattina 33 cl.',
-        prezzo: '2,50 EUR',
+        prezzo: 2.50,
         img: 'https://images.unsplash.com/photo-1581636625402-29b2a704ef13?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -198,7 +201,7 @@ const prodottiMenu = [
         nome: 'Birra Artigianale',
         categoria: 'Bevande',
         desc: 'Bottiglia 33 cl.',
-        prezzo: '4,50 EUR',
+        prezzo: 4.50,
         img: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -206,7 +209,7 @@ const prodottiMenu = [
         nome: 'Brownie al Cioccolato',
         categoria: 'Dolci',
         desc: 'Brownie morbido con cioccolato fondente.',
-        prezzo: '4,00 EUR',
+        prezzo: 4.00,
         img: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -214,7 +217,7 @@ const prodottiMenu = [
         nome: 'Cheesecake',
         categoria: 'Dolci',
         desc: 'Cheesecake con topping ai frutti rossi.',
-        prezzo: '4,50 EUR',
+        prezzo: 4.50,
         img: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -222,7 +225,7 @@ const prodottiMenu = [
         nome: 'Milkshake Vaniglia',
         categoria: 'Dolci',
         desc: 'Milkshake cremoso alla vaniglia.',
-        prezzo: '4,00 EUR',
+        prezzo: 4.00,
         img: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=700&q=80',
     },
     {
@@ -230,17 +233,35 @@ const prodottiMenu = [
         nome: 'Milkshake Cioccolato',
         categoria: 'Dolci',
         desc: 'Milkshake cremoso al cioccolato.',
-        prezzo: '4,00 EUR',
+        prezzo: 4.00,
         img: 'https://images.unsplash.com/photo-1541658016709-82535e94bc69?auto=format&fit=crop&w=700&q=80',
     },
 ];
 
 
 const categorie = ['Burger', 'Panini speciali', 'Bevande', 'Fritti', 'Salse', 'Dolci'];
+
+const quantityButtonSx = {
+    backgroundColor: '#1a1a1a',
+    color: '#ff8400',
+    borderRadius: '10px',
+    width: 64,
+    minWidth: 64,
+    height: 62,
+    minHeight: 62,
+    p: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    '&:hover': {
+        backgroundColor: '#111111',
+    },
+};
+
 function Menu() {
     const [prodottiMenuFiltered, setProdottiMenuFiltered] = useState([]);
     const [categoriaSelezionata, setCategoriaSelezionata] = useState('Burger');
-    const [quantita, setQuantita] = useState({});
+    const { addItem, decreaseItem, getQuantity } = useCart();
 
     useEffect(() => {
         setProdottiMenuFiltered(prodottiMenu.filter(prodotto => prodotto.categoria.toLowerCase() === categoriaSelezionata.toLowerCase()));
@@ -325,7 +346,7 @@ function Menu() {
                             backgroundColor: '#2a2a2a',
                             borderRadius: '20px',
                             border: '1px solid rgba(255,255,255,0.06)',
-                            height: '380px',
+                            height: '410px',
                             width: { xs: '85vw', sm: '300px' },
                             scrollSnapAlign: 'start',
                             overflow: 'hidden',
@@ -344,7 +365,7 @@ function Menu() {
                                 alt={prodotto.nome}
                                 sx={{
                                     width: '100%',
-                                    height: { xs: '150px', sm: '160px', md: '180px' },
+                                    height: '165px',
                                     objectFit: 'cover',
                                     display: 'block',
                                 }}
@@ -359,40 +380,58 @@ function Menu() {
                                     {prodotto.nome}
                                 </Typography>
 
-                                <Typography sx={{height:'44px',color: 'rgba(255,255,255,0.5)', fontSize: '13px',mb: 2 }}>
+                                <Typography sx={{ height: '44px', color: 'rgba(255,255,255,0.5)', fontSize: '13px', mb: 2 }}>
                                     {prodotto.desc}
                                 </Typography>
 
                                 <Typography sx={{ color: '#ff8400', fontWeight: 900, fontSize: '20px' }}>
-                                    {prodotto.prezzo}
+                                    {prodotto.prezzo} EUR
                                 </Typography>
                                 <Box sx={{
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
                                     gap: 3,
+                                    mt: 2,
+                                }}></Box>
+                                <Box sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 3,
+
                                 }}>
                                     <Button onClick={() =>
-                                        setQuantita({
-                                            ...quantita,
-                                            [prodotto.id]: Math.max(0, (quantita[prodotto.id]|| 0)-1 )
-                                        })
+                                        decreaseItem(prodotto.id)
                                     } sx={{
-                                        backgroundColor: '#1a1a1a', fontWeight: 900, fontSize: '30px', color: '#ff8400', borderRadius: '10px', width: '20%', maxHeight: '5vh', display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center"
+                                        backgroundColor: '#1a1a1a',
+                                        fontWeight: 900,
+                                        fontSize: '30px',
+                                        color: '#ff8400',
+                                        borderRadius: '10px',
+                                        p: 0,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
                                     }}>
                                         −
                                     </Button>
                                     <Typography sx={{ color: '#ffffff', fontWeight: 900, fontSize: '25px' }}>
-                                        {quantita[prodotto.id] || 0}
+                                        {getQuantity(prodotto.id)}
                                     </Typography>
                                     <Button onClick={() =>
-                                        setQuantita({
-                                            ...quantita,
-                                            [prodotto.id]: (quantita[prodotto.id] || 0) +1
-                                        })
-                                    } sx={{ backgroundColor: '#1a1a1a', fontWeight: 900, fontSize: '30px', color: '#ff8400', borderRadius: '10px', width: '20%', maxHeight: '5vh' }}>
+                                            addItem(prodotto)
+                                    } sx={{
+                                        backgroundColor: '#1a1a1a',
+                                        fontWeight: 900,
+                                        fontSize: '30px',
+                                        color: '#ff8400',
+                                        borderRadius: '10px',
+                                        display: 'flex',
+                                        p:0,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}>
                                         +
                                     </Button>
                                 </Box>

@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 // Importiamo Material UI
-import {Grow, Box, AppBar, Toolbar, Typography, IconButton, Button, Popover } from '@mui/material';
+import { Grow, Box, AppBar, Toolbar, Typography, IconButton, Button, Popover, Grid } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import PersonIcon from '@mui/icons-material/Person';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { Link, useLocation } from 'react-router-dom';
+import { useCart } from './CartContext'
 
 
 function Navbar() {
+  const { cartItems, totalQuantity , addItem, decreaseItem } = useCart();
   const [utente, setUtente] = useState(null);
   const location = useLocation();
   const [cartOpen, setCartOpen] = useState(false);
@@ -53,6 +55,7 @@ function Navbar() {
     localStorage.removeItem('token');
     setUtente(null);
   };
+
   return (
     // AppBar 
     <AppBar position="fixed" color="warning" sx={{ maxWidth: '100%', background: 'linear-gradient(135deg, #000000 0%, #1c1816 50%, #000000 100%)', }}>
@@ -88,7 +91,7 @@ function Navbar() {
                 border: '1px solid rgba(255, 132, 0, 0.45)',
                 borderRadius: '14px',
                 boxShadow: '0 18px 45px rgba(0,0,0,0.55)',
-                overflow: 'hidden'
+                overflow: 'hidden',
               }
             }
           }}
@@ -113,15 +116,35 @@ function Navbar() {
               </Typography>
 
               <Typography sx={{ color: '#ff8400', fontWeight: 700, fontSize: 13 }}>
-                0 articoli
+                {totalQuantity} articoli
               </Typography>
+
             </Box>
-
+            
             <Box sx={{ my: 2, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
-
-            <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, textAlign: 'center', py: 3 }}>
+           {totalQuantity ? (<Box sx={{minHeight:'100px'}}>
+              {cartItems.map((item) => (
+                <Box key={item.id}>
+                  <Grid sx={{display:'flex',gap:2}}> <Typography>
+                    {item.nome}
+                  </Typography>
+                  <Typography sx={{background:'#ff6200f2', borderRadius:'10px', width:'10%', textAlign:'center', fontWeight:'bold'}}>
+                    {item.quantita}
+                  </Typography>
+                  <Typography sx={{color:'#ff6200'}}>
+                    {item.quantita*item.prezzo} EUR
+                  </Typography>
+                  </Grid>
+                   <Typography>
+                    {item.prezzo} EUR
+                  </Typography>
+                 
+                </Box>
+              ))}
+            </Box>): ( <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, textAlign: 'center', py: 3 }}>
               Il carrello è vuoto
-            </Typography>
+            </Typography>) }
+            
 
             <Box sx={{ my: 2, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
 
@@ -137,7 +160,11 @@ function Navbar() {
                   backgroundColor: '#ff9d2e',
                 }
               }}
+              component={Link}
+              to='/cart'
+              onClick={handleCartClose}
             >
+
               Vai all'ordine
             </Button>
           </Box>

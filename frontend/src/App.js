@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './components/Login'
 import Register from './components/Register'
 import Cart from './components/Cart'
+import { CartProvider } from './components/CartContext';
 
 function HomePage() {
   return (
@@ -20,6 +21,7 @@ function HomePage() {
 function App() {
   return (
     <>
+    <CartProvider>
       <BrowserRouter>
       <Navbar/>
       <Toolbar />
@@ -33,6 +35,7 @@ function App() {
       </Routes>
       </Box>
       </BrowserRouter>
+      </CartProvider>
     </>
       );
 }
