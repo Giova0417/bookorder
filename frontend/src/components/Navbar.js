@@ -9,7 +9,7 @@ import { useCart } from './CartContext'
 
 
 function Navbar() {
-  const { cartItems, totalQuantity , addItem, decreaseItem } = useCart();
+  const { cartItems, totalQuantity, addItem, decreaseItem } = useCart();
   const [utente, setUtente] = useState(null);
   const location = useLocation();
   const [cartOpen, setCartOpen] = useState(false);
@@ -120,31 +120,40 @@ function Navbar() {
               </Typography>
 
             </Box>
-            
+
             <Box sx={{ my: 2, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
-           {totalQuantity ? (<Box sx={{minHeight:'100px'}}>
+            {totalQuantity ? (<Box sx={{ minHeight: '100px' }}>
               {cartItems.map((item) => (
                 <Box key={item.id}>
-                  <Grid sx={{display:'flex',gap:2}}> <Typography>
+                  <Grid sx={{ display: 'flex', gap: 1, width:'100%' ,whiteSpace: 'nowrap'}}> <Typography>
                     {item.nome}
                   </Typography>
-                  <Typography sx={{background:'#ff6200f2', borderRadius:'10px', width:'10%', textAlign:'center', fontWeight:'bold'}}>
-                    {item.quantita}
-                  </Typography>
-                  <Typography sx={{color:'#ff6200'}}>
-                    {item.quantita*item.prezzo} EUR
-                  </Typography>
+                    <Box sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                      width: '100%',
+                      px: 2,
+                      gap:1
+                    }}>
+                      <Typography sx={{ background: '#ff6200f2', borderRadius: '10px', minWidth: '30px', textAlign: 'center', fontWeight: 'bold', }}>
+                        ×{item.quantita}
+                      </Typography>
+                      <Typography sx={{ color: '#ff6200' }}>
+                        {item.quantita * item.prezzo} EUR
+                      </Typography>
+                    </Box>
                   </Grid>
-                   <Typography>
+                  <Typography>
                     {item.prezzo} EUR
                   </Typography>
-                 
+
                 </Box>
               ))}
-            </Box>): ( <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, textAlign: 'center', py: 3 }}>
+            </Box>) : (<Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, textAlign: 'center', py: 3 }}>
               Il carrello è vuoto
-            </Typography>) }
-            
+            </Typography>)}
+
 
             <Box sx={{ my: 2, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
 
