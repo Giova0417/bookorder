@@ -385,7 +385,7 @@ function Menu() {
                                 </Typography>
 
                                 <Typography sx={{ color: '#ff8400', fontWeight: 900, fontSize: '20px' }}>
-                                    {prodotto.prezzo} EUR
+                                    {prodotto.prezzo.toFixed(2).replace('.', ',')} EUR
                                 </Typography>
                                 <Box sx={{
                                     display: "flex",
