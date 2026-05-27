@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 // Importiamo Material UI
-import { Grow, Box, AppBar, Toolbar, Typography, IconButton, Button, Popover, Grid } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
+import { Grow, Box, AppBar, Toolbar, Typography, IconButton, Button, Popover, Badge } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from './CartContext'
 
 
 function Navbar() {
-  const { cartItems, totalQuantity, addItem, decreaseItem } = useCart();
+  const { cartItems, totalQuantity } = useCart();
   const [utente, setUtente] = useState(null);
   const location = useLocation();
   const [cartOpen, setCartOpen] = useState(false);
@@ -55,30 +55,50 @@ function Navbar() {
     localStorage.removeItem('token');
     setUtente(null);
   };
+  const subtotal = cartItems.reduce((sum, item) => sum + item.prezzo * item.quantita, 0);
+  const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
 
   return (
     // AppBar 
     <AppBar position="fixed" color="warning" sx={{ maxWidth: '100%', background: 'linear-gradient(135deg, #000000 0%, #1c1816 50%, #000000 100%)', }}>
-      <Toolbar>
-        {/* L'icona del menu a sinistra */}
-        <IconButton size="large" edge="start" color="inherit" component={Link}
-          to='/' sx={{ mr: 2 }}>
-          <MenuIcon />
-        </IconButton>
-        <Typography variant="h4" component="div" sx={{
+      <Toolbar >
+        <Typography variant="h4" component={Link} to="/" sx={{
           flexGrow: 1,
           fontFamily: '"Segoe UI Black", "Arial Black", sans-serif',
           fontWeight: 900,
           letterSpacing: 0,
+          color: '#ffffff',
+          textDecoration: 'none',
           textShadow: '0 3px 10px rgba(0,0,0,0.45)',
         }}>
           Book&Order
         </Typography>
         {/* I pulsanti di Login e carrello a destra */}
+        <IconButton
+          color="inherit"
+          size="large"
+          component={Link}
+          to="/ordini"
+        >
+          <ReceiptLongIcon />
+        </IconButton>
+
         <IconButton color="inherit"
           size="large"
           onClick={handleCartClick}>
-          <ShoppingCartIcon />
+          <Badge
+            badgeContent={totalQuantity}
+            color="warning"
+            sx={{
+              '& .MuiBadge-badge': {
+                backgroundColor: '#ff8400',
+                color: '#111',
+                fontWeight: 900,
+              },
+            }}
+          >
+            <ShoppingCartIcon />
+          </Badge>
         </IconButton>
         <Popover
           slotProps={{
@@ -96,7 +116,7 @@ function Navbar() {
             }
           }}
           TransitionComponent={Grow}
-          transitionDuration={400}
+          transitionDuration={180}
           open={cartOpen}
           anchorEl={cartAnchor}
           onClose={handleCartClose}
@@ -122,32 +142,36 @@ function Navbar() {
             </Box>
 
             <Box sx={{ my: 2, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
-            {totalQuantity ? (<Box sx={{ minHeight: '100px' }}>
+            {totalQuantity ? (<Box sx={{ maxHeight: 260, overflowY: 'auto', pr: 0.5 }}>
               {cartItems.map((item) => (
-                <Box key={item.id}>
-                  <Grid sx={{ display: 'flex', gap: 1, width:'100%' ,whiteSpace: 'nowrap'}}> <Typography>
-                    {item.nome}
-                  </Typography>
-                    <Box sx={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      alignItems: 'center',
-                      width: '100%',
-                      px: 2,
-                      gap:1
+                <Box
+                  key={item.id}
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'minmax(0, 1fr) auto',
+                    gap: 1.5,
+                    alignItems: 'center',
+                    py: 1,
+                  }}
+                >
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{
+                      fontWeight: 800,
+                      fontSize: 14,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}>
-                      <Typography sx={{ background: '#ff6200f2', borderRadius: '10px', minWidth: '30px', textAlign: 'center', fontWeight: 'bold', }}>
-                        ×{item.quantita}
-                      </Typography>
-                      <Typography sx={{ color: '#ff6200' }}>
-                        {item.quantita * item.prezzo} EUR
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Typography>
-                    {item.prezzo} EUR
-                  </Typography>
+                      {item.nome}
+                    </Typography>
+                    <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, mt: 0.3 }}>
+                      {item.quantita} x {formatPrice(item.prezzo)}
+                    </Typography>
+                  </Box>
 
+                  <Typography sx={{ color: '#ff8400', fontWeight: 900, fontSize: 14 }}>
+                    {formatPrice(item.quantita * item.prezzo)}
+                  </Typography>
                 </Box>
               ))}
             </Box>) : (<Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, textAlign: 'center', py: 3 }}>
@@ -156,6 +180,16 @@ function Navbar() {
 
 
             <Box sx={{ my: 2, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
+            {totalQuantity > 0 && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>
+                  Totale
+                </Typography>
+                <Typography sx={{ color: '#ff8400', fontWeight: 900, fontSize: 18 }}>
+                  {formatPrice(subtotal)}
+                </Typography>
+              </Box>
+            )}
 
             <Button
               fullWidth

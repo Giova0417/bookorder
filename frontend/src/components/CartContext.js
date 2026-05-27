@@ -1,11 +1,9 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
     const [items, setItems] = useState({});
-    const [quantitaTotale, setQuantitaTotale] = useState(0);
-
 
     const addItem = (prodotto) => {
         setItems((prev) => ({
@@ -43,6 +41,10 @@ export function CartProvider({ children }) {
         return items[prodottoId]?.quantita || 0;
     };
 
+    const clearCart = () => {
+        setItems({});
+    };
+
     const cartItems = Object.values(items);
 
     const totalQuantity = useMemo(() => {
@@ -57,6 +59,7 @@ export function CartProvider({ children }) {
                 decreaseItem,
                 getQuantity,
                 totalQuantity,
+                clearCart,
             }}
         >
             {children}

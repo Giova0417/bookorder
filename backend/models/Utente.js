@@ -11,7 +11,6 @@ module.exports = Utente;
 
 function creaOrdinePerUtente(utente, ordine) {
     const nuovoOrdine = new Ordine({
-        id_ordine: generaIdOrdine(),
         tavolo: ordine.tavolo,
         piatti: ordine.piatti, 
     })};

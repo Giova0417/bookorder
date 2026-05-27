@@ -77,7 +77,7 @@ function DiscoverMenu() {
           <Typography variant="overline" sx={{ color: '#ff8400', letterSpacing: 3 }}>
             DA NON PERDERE
           </Typography>
-          <Typography variant="h3" sx={{ color: '#ffffff', fontWeight: 900, mt: 1, textTransform: 'uppercase'}}>
+          <Typography variant="h3" sx={{ color: '#ffffff', fontWeight: 900, mt: 1, textTransform: 'uppercase' }}>
             Scopri il Menu
           </Typography>
         </Box>
@@ -122,7 +122,7 @@ function DiscoverMenu() {
           px: { xs: 3, md: 0 },
           mx: { xs: -3, md: 0 },
           pb: { xs: 2, md: 0 },
-          pt:'6px',
+          pt: '6px',
           scrollbarWidth: 'none',
           '&::-webkit-scrollbar': {
             display: 'none'
@@ -130,7 +130,8 @@ function DiscoverMenu() {
         }}
       >
         {piatti.map((piatto) => (
-            <Card key={piatto.id} sx={{
+          <Card key={piatto.id} component={Link}
+            to="/menu" sx={{
               backgroundColor: '#2a2a2a',
               borderRadius: '20px',
               border: '1px solid rgba(255,255,255,0.06)',
@@ -141,6 +142,7 @@ function DiscoverMenu() {
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
+              textDecoration: 'none',
               transition: 'all 0.3s',
               '&:hover': {
                 transform: 'translateY(-6px)',
@@ -148,66 +150,66 @@ function DiscoverMenu() {
                 boxShadow: '0 12px 40px rgba(255,132,0,0.2)',
               },
             }}>
-              <Box
-                component="img"
-                src={piatto.img}
-                alt={piatto.nome}
-                sx={{
-                  width: '100%',
-                  height: { xs: '150px', sm: '160px', md: '180px' },
-                  objectFit: 'cover',
-                  display: 'block',
-                }}
-              />
+            <Box
+              component="img"
+              src={piatto.img}
+              alt={piatto.nome}
+              sx={{
+                width: '100%',
+                height: { xs: '150px', sm: '160px', md: '180px' },
+                objectFit: 'cover',
+                display: 'block',
+              }}
+            />
 
-              <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                {/* Categoria */}
-                <Typography sx={{
-                  color: '#ff8400',
-                  fontSize: '11px',
-                  fontWeight: 'bold',
-                  letterSpacing: 2,
-                  mb: 1,
-                }}>
-                  {piatto.categoria.toUpperCase()}
-                </Typography>
+            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+              {/* Categoria */}
+              <Typography sx={{
+                color: '#ff8400',
+                fontSize: '11px',
+                fontWeight: 'bold',
+                letterSpacing: 2,
+                mb: 1,
+              }}>
+                {piatto.categoria.toUpperCase()}
+              </Typography>
 
-                {/* Nome */}
-                <Typography sx={{ color: '#ffffff', fontWeight: 'bold', fontSize: '16px', mb: 1 }}>
-                  {piatto.nome}
-                </Typography>
+              {/* Nome */}
+              <Typography sx={{ color: '#ffffff', fontWeight: 'bold', fontSize: '16px', mb: 1 }}>
+                {piatto.nome}
+              </Typography>
 
-                {/* Descrizione */}
-                <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', flexGrow: 1, mb: 2 }}>
-                  {piatto.desc}
-                </Typography>
+              {/* Descrizione */}
+              <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', flexGrow: 1, mb: 2 }}>
+                {piatto.desc}
+              </Typography>
 
-                {/* Prezzo */}
-                <Typography sx={{ color: '#ff8400', fontWeight: 900, fontSize: '20px' }}>
-                  {piatto.prezzo}
-                </Typography>
-              </CardContent>
-            </Card>
+              {/* Prezzo */}
+              <Typography sx={{ color: '#ff8400', fontWeight: 900, fontSize: '20px' }}>
+                {piatto.prezzo}
+              </Typography>
+            </CardContent>
+          </Card>
         ))}
       </Box>
 
       {/* Bottone vedi tutto */}
       <Box sx={{ textAlign: 'center', mt: 6 }}>
         <Button variant="outlined"
-        component={Link}
-        to="/menu"
-        sx={{
-          color: '#ff8400',
-          borderColor: '#ff8400',
-          borderRadius: '300px',
-          px: 6,
-          py: 1.5,
-          fontSize: '16px',
-          '&:hover': {
-            backgroundColor: '#ff8400',
-            color: '#ffffff',
-          },
-        }}>
+          component={Link}
+          to="/menu"
+          sx={{
+            color: '#ff8400',
+            borderColor: '#ff8400',
+            borderRadius: '300px',
+            px: 6,
+            py: 1.5,
+            fontSize: '16px',
+            '&:hover': {
+              backgroundColor: '#ff8400',
+              color: '#ffffff',
+            },
+          }}>
           Vedi tutto il menu
         </Button>
       </Box>

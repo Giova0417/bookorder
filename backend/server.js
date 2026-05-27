@@ -7,6 +7,7 @@ dotenv.config(); // Carica le variabili d'ambiente dal file .env
 //CREAZIONE DELL'APP (IL SERVER)
 const app = express();
 const authRoutes = require('./routes/auth');
+const orderRoutes= require('./routes/order')
 
 // 3. IMPOSTIAMO LE REGOLE BASE 
 app.use(cors()); // Permette al futuro frontend (React) di parlare con noi 
@@ -17,6 +18,7 @@ app.get('/', (req, res) => {
   res.send('Ciao! Il motore di Book&Order è acceso e funzionante!');
 });
 app.use('/api/auth', authRoutes);
+app.use('/api/order', orderRoutes);
 // IL COMANDO DI CONNESSIONE
 mongoose.connect(process.env.MONGO_URI)
 .then(() => {

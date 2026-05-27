@@ -1,105 +1,381 @@
-import React, { useEffect, useState } from 'react';
-import { Grid, Box, Typography, Card, CardContent, Button } from '@mui/material';
-import { useCart } from './CartContext'
+import React from 'react';
+import { useState } from 'react';
+import {
+    Box,
+    Typography,
+    Card,
+    CardContent,
+    Button,
+    Divider,
+    IconButton,
+    Alert,
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import { Link } from 'react-router-dom';
+import { useCart } from './CartContext';
+const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
+
+const quantityButtonSx = {
+    width: 38,
+    height: 38,
+    borderRadius: '10px',
+    backgroundColor: '#161616',
+    color: '#ff8400',
+    border: '1px solid rgba(255,132,0,0.22)',
+    '&:hover': {
+        backgroundColor: '#211a14',
+        borderColor: '#ff8400',
+    },
+};
+
 function Cart() {
-    const { cartItems, addItem, decreaseItem } = useCart();
+    const { cartItems, addItem, decreaseItem, totalQuantity, clearCart } = useCart();
+    const subtotal = cartItems.reduce((sum, item) => sum + item.prezzo * item.quantita, 0);
+    const [errore, setErrore] = useState('');
+    const [successo, setSuccesso] = useState('');
+    const handleOrder = async () => {
+        try {
+            setErrore('');
+            setSuccesso('');
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                setErrore('Devi effettuare il login prima di ordinare');
+                return;
+            }
+            const risposta = await fetch('http://localhost:5000/api/order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+
+                body: JSON.stringify({
+                    cartItems,
+
+                })
+            })
+            const dati = await risposta.json();
+
+            if (!risposta.ok) {
+                setErrore(dati.message || 'Ordine non registrato. Riprova.');
+                return;
+            }
+
+            clearCart();
+            setSuccesso(dati.message || 'ORDINE EFFETTUATO CON SUCCESSO');
+            console.log('Ordine creato:', dati.ordine);
+        }
+        catch (errore) {
+            setErrore('Ordine non registrato. Controlla la connessione e riprova.');
+            setTimeout(() => {
+                setErrore('');
+            }, 3000);
+        }
+    }
+
     return (
         <Box sx={{
+            minHeight: '100vh',
             background: 'linear-gradient(135deg, #ff6200 0%, #835b27 50%, #2d2825 100%)',
-            height: '100vh',
-            py: { xs: '20%', md: '5%' },
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
+            px: { xs: 2, md: 8 },
+            py: { xs: 4, md: 7 },
+            color: '#ffffff',
         }}>
-            <Card sx={{
-                width: '100%',
-                maxWidth: '480px',
-                backgroundColor: '#2a2a2a',
-                borderRadius: '20px',
-                border: '1px solid rgba(255,255,255,0.06)',
-                boxShadow: '0 18px 50px rgba(0,0,0,0.35)',
-                overflow: 'hidden',
-            }} >
+            <Box sx={{ maxWidth: 1180, mx: 'auto' }}>
+                <Box sx={{ mb: 4 }}>
+                    <Typography sx={{
+                        fontWeight: 900,
+                        fontSize: { xs: '32px', md: '44px' },
+                        lineHeight: 1,
+                    }}>
+                        Il tuo carrello
+                    </Typography>
+                    <Typography sx={{
+                        color: 'rgba(0, 0, 0, 0.66)',
+                        fontSize: { xs: '14px', md: '16px' },
+                        mt: 1,
+                    }}>
+                        {totalQuantity} {totalQuantity === 1 ? 'prodotto selezionato' : 'prodotti selezionati'}
+                    </Typography>
+                </Box>
 
-                <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {cartItems.map((item) => (
-                        <Box sx={{
-                            display: 'flex', flexDirection: 'row', justifyContent: 'space-between'
-                        }} key={item.id}>
-                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0, height: '100px' }} >
-                                <Typography sx={{
-                                    color: '#ffffff',
+                {errore && (
+                    <Alert
+                        severity="error"
+                        sx={{
+                            mb: 3,
+                            backgroundColor: '#2a1d1d',
+                            color: '#ffffff',
+                            border: '1px solid rgba(255,132,0,0.35)',
+                            '& .MuiAlert-icon': {
+                                color: '#ff8400',
+                            },
+                        }}
+                    >
+                        {errore}
+                    </Alert>
+                )}
+
+                {successo && (
+                    <Alert
+                        severity="success"
+                        sx={{
+                            mb: 3,
+                            backgroundColor: '#388e29',
+                            fontWeight: 'bold',
+                            color: '#fefefe',
+                            border: '1px solid rgba(255,132,0,0.35)',
+                            '& .MuiAlert-icon': {
+                                color: '#ff8400',
+                            },
+                        }}
+                    >
+                        {successo}
+                    </Alert>
+                )}
+
+                {cartItems.length === 0 ? (
+                    <Card sx={{
+                        backgroundColor: '#242424',
+                        borderRadius: '18px',
+                        border: '1px solid rgba(255,132,0,0.24)',
+                        boxShadow: '0 18px 50px rgba(0,0,0,0.35)',
+                    }}>
+                        <CardContent sx={{
+                            minHeight: 300,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            textAlign: 'center',
+                            gap: 2,
+                            p: { xs: 3, md: 5 },
+                        }}>
+                            <Typography sx={{ fontSize: '26px', fontWeight: 900, color: '#fff' }}>
+                                Il carrello è vuoto
+                            </Typography>
+                            <Typography sx={{ maxWidth: 420, color: 'rgba(255,255,255,0.62)' }}>
+                                Scegli qualcosa dal menu e lo troverai qui pronto per l'ordine.
+                            </Typography>
+                            <Button
+                                component={Link}
+                                to="/menu"
+                                variant="contained"
+                                sx={{
+                                    mt: 1,
+                                    backgroundColor: '#ff8400',
+                                    color: '#111',
                                     fontWeight: 900,
-                                    fontFamily: '"Segoe UI Black", "Arial Black", sans-serif',
-                                    letterSpacing: 0,
-                                    fontSize: { xs: '18px', sm: '22px' },
-                                    lineHeight: 1,
-                                    textShadow: '0 4px 0 rgba(0,0,0,0.18), 0 14px 30px rgba(0,0,0,0.35)',
-                                }}>
-                                    {item.nome}
+                                    borderRadius: '12px',
+                                    px: 4,
+                                    py: 1.2,
+                                    '&:hover': {
+                                        backgroundColor: '#ff9d2e',
+                                    },
+                                }}
+                            >
+                                Vai al menu
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <Box sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) 360px' },
+                        gap: 3,
+                        alignItems: 'start',
+                    }}>
+                        <Card sx={{
+                            backgroundColor: '#242424',
+                            borderRadius: '18px',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            boxShadow: '0 18px 50px rgba(0,0,0,0.35)',
+                            overflow: 'hidden',
+                        }}>
+                            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                    {cartItems.map((item) => (
+                                        <Box
+                                            key={item.id}
+                                            sx={{
+                                                display: 'grid',
+                                                gridTemplateColumns: { xs: '86px minmax(0, 1fr)', sm: '104px minmax(0, 1fr) auto' },
+                                                gap: { xs: 1.5, sm: 2 },
+                                                alignItems: 'center',
+                                                p: 1.5,
+                                                borderRadius: '14px',
+                                                backgroundColor: '#1d1d1d',
+                                                border: '1px solid rgba(255,255,255,0.06)',
+                                            }}
+                                        >
+                                            <Box
+                                                component="img"
+                                                src={item.img}
+                                                alt={item.nome}
+                                                sx={{
+                                                    width: '100%',
+                                                    aspectRatio: '1 / 1',
+                                                    objectFit: 'cover',
+                                                    borderRadius: '12px',
+                                                }}
+                                            />
+
+                                            <Box sx={{ minWidth: 0 }}>
+                                                <Typography sx={{
+                                                    color: '#fff',
+                                                    fontWeight: 900,
+                                                    fontSize: { xs: '17px', sm: '19px' },
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                }}>
+                                                    {item.nome}
+                                                </Typography>
+                                                <Typography sx={{
+                                                    color: 'rgba(255,255,255,0.56)',
+                                                    fontSize: '14px',
+                                                    mt: 0.5,
+                                                }}>
+                                                    {formatPrice(item.prezzo)}
+                                                </Typography>
+
+                                                <Box sx={{
+                                                    display: { xs: 'flex', sm: 'none' },
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    mt: 1.5,
+                                                    gap: 1,
+                                                }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                        <IconButton onClick={() => decreaseItem(item.id)} sx={quantityButtonSx}>
+                                                            <RemoveIcon />
+                                                        </IconButton>
+                                                        <Typography sx={{ color: '#ffffff', minWidth: 24, textAlign: 'center', fontWeight: 900 }}>
+                                                            {item.quantita}
+                                                        </Typography>
+                                                        <IconButton onClick={() => addItem(item)} sx={quantityButtonSx}>
+                                                            <AddIcon />
+                                                        </IconButton>
+                                                    </Box>
+                                                    <Typography sx={{ color: '#ff8400', fontWeight: 900 }}>
+                                                        {formatPrice(item.prezzo * item.quantita)}
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+
+                                            <Box sx={{
+                                                display: { xs: 'none', sm: 'grid' },
+                                                gridTemplateColumns: '38px 34px 38px 100px',
+                                                gap: 1,
+                                                alignItems: 'center',
+                                            }}>
+                                                <IconButton onClick={() => decreaseItem(item.id)} sx={quantityButtonSx}>
+                                                    <RemoveIcon />
+                                                </IconButton>
+                                                <Typography sx={{ color: '#ffffff', textAlign: 'center', fontWeight: 900, fontSize: '18px' }}>
+                                                    {item.quantita}
+                                                </Typography>
+                                                <IconButton onClick={() => addItem(item)} sx={quantityButtonSx}>
+                                                    <AddIcon />
+                                                </IconButton>
+                                                <Typography sx={{
+                                                    color: '#ff8400',
+                                                    fontWeight: 900,
+                                                    textAlign: 'right',
+                                                    fontSize: '16px',
+                                                }}>
+                                                    {formatPrice(item.prezzo * item.quantita)}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            </CardContent>
+                        </Card>
+
+                        <Card sx={{
+                            backgroundColor: '#242424',
+                            borderRadius: '18px',
+                            border: '1px solid rgba(255,132,0,0.24)',
+                            boxShadow: '0 18px 50px rgba(0,0,0,0.35)',
+                            position: { md: 'sticky' },
+                            top: { md: 96 },
+                        }}>
+                            <CardContent sx={{ p: 3 }}>
+                                <Typography sx={{ color: '#ffffff', fontWeight: 900, fontSize: '24px', mb: 2 }}>
+                                    Riepilogo
                                 </Typography>
 
-                                <Typography sx={{
-                                    color: '#ffffff',
-                                    fontWeight: 900,
-                                    fontFamily: '"Segoe UI Black", "Arial Black", sans-serif',
-                                    letterSpacing: 0,
-                                    fontSize: { xs: '18px', sm: '22px' },
-                                    lineHeight: 1,
-                                    textShadow: '0 4px 0 rgba(0,0,0,0.18), 0 14px 30px rgba(0,0,0,0.35)',
-                                }}>
-                                    ×{item.quantita}
-                                </Typography>
-                                <Typography sx={{
-                                    mb: '20px',
-                                    color: '#ffffff',
-                                    fontWeight: 900,
-                                    fontFamily: '"Segoe UI Black", "Arial Black", sans-serif',
-                                    letterSpacing: 0,
-                                    fontSize: { xs: '18px', sm: '22px' },
-                                    lineHeight: 1,
-                                    textShadow: '0 4px 0 rgba(0,0,0,0.18), 0 14px 30px rgba(0,0,0,0.35)',
-                                }}>
-                                    {item.prezzo.toFixed(2).replace('.', ',')} EUR
-                                </Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 1, height: '50%' }}>
-                                <Button onClick={() =>
-                                    decreaseItem(item.id)
-                                } sx={{
-                                    backgroundColor: '#1a1a1a',
-                                    fontWeight: 900,
-                                    fontSize: '30px',
-                                    color: '#ff8400',
-                                    borderRadius: '10px',
-                                    p: 0,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}>
-                                    −
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                                    <Typography sx={{ color: 'rgba(255,255,255,0.62)' }}>
+                                        Subtotale
+                                    </Typography>
+                                    <Typography sx={{ fontWeight: 800, color: '#ffffff', }}>
+                                        {formatPrice(subtotal)}
+                                    </Typography>
+                                </Box>
+
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                                    <Typography sx={{ color: 'rgba(255,255,255,0.62)' }}>
+                                        Servizio
+                                    </Typography>
+                                    <Typography sx={{ fontWeight: 800, color: '#ffffff', }}>
+                                        {formatPrice(0)}
+                                    </Typography>
+                                </Box>
+
+                                <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', my: 2 }} />
+
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 3 }}>
+                                    <Typography sx={{ fontWeight: 900, fontSize: '20px', color: '#ffffff', }}>
+                                        Totale
+                                    </Typography>
+                                    <Typography sx={{ color: '#ff8400', fontWeight: 900, fontSize: '24px' }}>
+                                        {formatPrice(subtotal)}
+                                    </Typography>
+                                </Box>
+
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    sx={{
+                                        backgroundColor: '#ff8400',
+                                        color: '#111',
+                                        fontWeight: 900,
+                                        borderRadius: '12px',
+                                        py: 1.4,
+                                        '&:hover': {
+                                            backgroundColor: '#ff9d2e',
+                                        },
+                                    }}
+                                    onClick={
+                                        handleOrder
+                                    }
+                                >
+                                    Conferma ordine
                                 </Button>
 
-                                <Button sx={{
-                                    backgroundColor: '#1a1a1a',
-                                    fontWeight: 900,
-                                    fontSize: '30px',
-                                    color: '#ff8400',
-                                    borderRadius: '10px',
-                                    p: 0,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }} onClick={() => addItem(item)}>+</Button>
-                            </Box>
-                        </Box>
-                    ))}
-                </CardContent>
-            </Card>
+                                <Button
+                                    component={Link}
+                                    to="/menu"
+                                    fullWidth
+                                    sx={{
+                                        mt: 1,
+                                        color: '#ff8400',
+                                        fontWeight: 800,
+                                    }}
+                                >
+                                    Continua ad aggiungere
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </Box>
+                )}
+            </Box>
         </Box>
-    )
+    );
 }
 
-export default Cart
+export default Cart;
