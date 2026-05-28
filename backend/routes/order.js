@@ -45,8 +45,11 @@ router.post('', async (req, res) => {
             return res.status(401).json({ message: 'Utente non esiste' });
         }
 
-        const { cartItems } = req.body;
+        const { cartItems, numeroTavolo } = req.body;
 
+        if (!numeroTavolo) {
+            return res.status(400).json({ message: 'Inserisci un tavolo' })
+        }
         if (!cartItems || cartItems.length === 0) {
             return res.status(400).json({ message: 'Il carrello e vuoto' });
         }
@@ -54,6 +57,7 @@ router.post('', async (req, res) => {
         const ordine = await Ordine.create({
             cartItems,
             idUtente,
+            numeroTavolo
         });
 
         return res.status(201).json({

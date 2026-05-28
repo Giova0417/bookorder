@@ -1,4 +1,5 @@
 import React from 'react';
+import '../Cart.css';
 import { useState } from 'react';
 import {
     Box,
@@ -9,6 +10,8 @@ import {
     Divider,
     IconButton,
     Alert,
+    TextField,
+    MenuItem
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -34,11 +37,16 @@ function Cart() {
     const subtotal = cartItems.reduce((sum, item) => sum + item.prezzo * item.quantita, 0);
     const [errore, setErrore] = useState('');
     const [successo, setSuccesso] = useState('');
+    const [numeroTavolo, setNumeroTavolo] = useState('');
     const handleOrder = async () => {
         try {
             setErrore('');
             setSuccesso('');
             const token = localStorage.getItem('token');
+            if(!numeroTavolo){
+                setErrore('Seleziona il tavolo');
+                return;
+            }
 
             if (!token) {
                 setErrore('Devi effettuare il login prima di ordinare');
@@ -53,6 +61,7 @@ function Cart() {
 
                 body: JSON.stringify({
                     cartItems,
+                    numeroTavolo
 
                 })
             })
@@ -196,6 +205,88 @@ function Cart() {
                         }}>
                             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                    <TextField
+                                        value={numeroTavolo}
+                                        onChange={(event) => setNumeroTavolo(event.target.value)}
+                                        className="numero-tavolo"
+                                        select
+                                        label="Numero tavolo"
+                                        variant="standard"
+                                        sx={{
+                                            p: 2,
+                                            background: '#00000069',
+                                            borderRadius: 5,
+                                            border: '2px solid #ff7300',
+                                            '& .MuiInputLabel-root': {
+                                                color: '#ffffff',
+                                                fontWeight: 800,
+                                            },
+                                            '& .MuiInputLabel-root.Mui-focused': {
+                                                color: '#ff8400',
+                                            },
+                                            '& .MuiInputBase-root': {
+                                                color: '#ffffff',
+                                            },
+                                            '& .MuiSelect-icon': {
+                                                color: '#ff8400',
+                                            },
+                                            '& .MuiInput-root:before': {
+                                                borderBottomColor: 'rgba(255,255,255,0.25)',
+                                            },
+                                            '& .MuiInput-root:hover:before': {
+                                                borderBottomColor: '#ff8400',
+                                            },
+                                            '& .MuiInput-root:after': {
+                                                borderBottomColor: '#ff8400',
+                                            },
+                                        }}
+                                        slotProps={{
+                                            select: {
+                                                MenuProps: {
+                                                    slotProps: {
+                                                        paper: {
+                                                            sx: {
+                                                                backgroundColor: '#181818',
+                                                                color: '#ffffff',
+                                                                border: '1px solid rgba(255,132,0,0.45)',
+                                                                borderRadius: '14px',
+                                                                mt: 1,
+                                                                overflow: 'hidden',
+                                                                boxShadow: '0 18px 50px rgba(0,0,0,0.55)',
+                                                            },
+                                                        },
+                                                        list: {
+                                                            sx: {
+                                                                py: 0,
+                                                                '& .MuiMenuItem-root': {
+                                                                    color: '#ffffff',
+                                                                    fontWeight: 800,
+                                                                    fontSize: '18px',
+                                                                    py: 1.5,
+                                                                },
+                                                                '& .MuiMenuItem-root:hover': {
+                                                                    backgroundColor: 'rgba(255,132,0,0.18)',
+                                                                },
+                                                                '& .MuiMenuItem-root.Mui-selected': {
+                                                                    backgroundColor: 'rgba(255,132,0,0.28)',
+                                                                    color: '#ff8400',
+                                                                },
+                                                                '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                                    backgroundColor: 'rgba(255,132,0,0.36)',
+                                                                },
+                                                            },
+                                                        },
+                                                    },
+                                                }
+                                            }
+                                        }}>
+                                        <MenuItem value={'1'}>Tavolo 1</MenuItem>
+                                        <MenuItem value={'2'}>Tavolo 2</MenuItem>
+                                        <MenuItem value={'3'}>Tavolo 3</MenuItem>
+                                        <MenuItem value={'4'}>Tavolo 4</MenuItem>
+                                        <MenuItem value={'5'}>Tavolo 5</MenuItem>
+                                        <MenuItem value={'6'}>Tavolo 6</MenuItem>
+                                    </TextField>
                                     {cartItems.map((item) => (
                                         <Box
                                             key={item.id}
@@ -262,7 +353,9 @@ function Cart() {
                                                     <Typography sx={{ color: '#ff8400', fontWeight: 900 }}>
                                                         {formatPrice(item.prezzo * item.quantita)}
                                                     </Typography>
+
                                                 </Box>
+
                                             </Box>
 
                                             <Box sx={{
@@ -335,6 +428,7 @@ function Cart() {
                                     <Typography sx={{ color: '#ff8400', fontWeight: 900, fontSize: '24px' }}>
                                         {formatPrice(subtotal)}
                                     </Typography>
+
                                 </Box>
 
                                 <Button

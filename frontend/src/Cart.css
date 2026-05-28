@@ -1,0 +1,15 @@
+.numero-tavolo .MuiInputLabel-root {
+    color: #ffffff !important;
+    font-size: medium;
+}
+
+.numero-tavolo .MuiInputLabel-root.Mui-focused {
+    color: #ffffff !important;
+}
+
+.numero-tavolo .MuiInput-input {
+    color: #ffffff !important;
+}
+.numero-tavolo .MuiInputLabel-standard {
+    top: 10px !important; 
+}

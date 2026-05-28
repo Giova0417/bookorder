@@ -9,7 +9,8 @@ const ordineSchema = new mongoose.Schema({
         quantita: Number,
     }],
     idUtente: { type: String, required: true },
-    stato: { type: String, default: 'In preparazione' }
+    stato: { type: String, default: 'In preparazione' },
+    numeroTavolo:{type:String,required:true}
 });
 //CREAZIONE MODELLO ORDINE
 const Ordine = mongoose.model('Ordine', ordineSchema);
