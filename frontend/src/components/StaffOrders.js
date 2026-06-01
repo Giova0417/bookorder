@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Alert,
     Box,
@@ -42,13 +42,13 @@ function StaffOrders() {
     const [ordiniInUscita, setOrdiniInUscita] = useState([]);
     const ordiniInUscitaRef = useRef(new Set());
 
-    const filtraOrdiniStaff = (listaOrdini) => {
+    const filtraOrdiniStaff = useCallback((listaOrdini) => {
         return listaOrdini.filter((ordine) => {
             return ordine.stato !== 'Consegnato' || ordiniInUscitaRef.current.has(ordine._id);
         });
-    };
+    }, []);
 
-    const nascondiOrdineConsegnato = (ordineId) => {
+    const nascondiOrdineConsegnato = useCallback((ordineId) => {
         ordiniInUscitaRef.current.add(ordineId);
         setOrdiniInUscita(Array.from(ordiniInUscitaRef.current));
 
@@ -57,9 +57,9 @@ function StaffOrders() {
             setOrdiniInUscita(Array.from(ordiniInUscitaRef.current));
             setOrdini((ordiniCorrenti) => ordiniCorrenti.filter((ordine) => ordine._id !== ordineId));
         }, TEMPO_USCITA_ORDINE);
-    };
+    }, []);
 
-    const caricaOrdini = async (mostraLoading) => {
+    const caricaOrdini = useCallback(async (mostraLoading) => {
         const token = localStorage.getItem('token');
 
         if (!token) {
@@ -96,7 +96,7 @@ function StaffOrders() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filtraOrdiniStaff]);
 
     const cambiaStato = async (ordineId, stato) => {
         try {
@@ -166,7 +166,7 @@ function StaffOrders() {
             active = false;
             socket.disconnect();
         };
-    }, []);
+    }, [caricaOrdini]);
 
     const ordiniInPreparazione = ordini.filter((ordine) => ordine.stato === 'In preparazione').length;
     const ordiniPronti = ordini.filter((ordine) => ordine.stato === 'Pronto').length;
