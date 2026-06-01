@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Alert,
     Box,
@@ -15,6 +15,7 @@ import { io } from 'socket.io-client';
 import { API_BASE_URL, apiFetch, refreshAccessToken } from '../api/client';
 
 const statiOrdine = ['In preparazione', 'Pronto', 'Consegnato'];
+const TEMPO_USCITA_ORDINE = 260;
 const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
 
 function totaleOrdine(ordine) {
@@ -38,6 +39,25 @@ function StaffOrders() {
     const [errore, setErrore] = useState('');
     const [loading, setLoading] = useState(true);
     const [ultimoAggiornamento, setUltimoAggiornamento] = useState('');
+    const [ordiniInUscita, setOrdiniInUscita] = useState([]);
+    const ordiniInUscitaRef = useRef(new Set());
+
+    const filtraOrdiniStaff = (listaOrdini) => {
+        return listaOrdini.filter((ordine) => {
+            return ordine.stato !== 'Consegnato' || ordiniInUscitaRef.current.has(ordine._id);
+        });
+    };
+
+    const nascondiOrdineConsegnato = (ordineId) => {
+        ordiniInUscitaRef.current.add(ordineId);
+        setOrdiniInUscita(Array.from(ordiniInUscitaRef.current));
+
+        window.setTimeout(() => {
+            ordiniInUscitaRef.current.delete(ordineId);
+            setOrdiniInUscita(Array.from(ordiniInUscitaRef.current));
+            setOrdini((ordiniCorrenti) => ordiniCorrenti.filter((ordine) => ordine._id !== ordineId));
+        }, TEMPO_USCITA_ORDINE);
+    };
 
     const caricaOrdini = async (mostraLoading) => {
         const token = localStorage.getItem('token');
@@ -65,7 +85,7 @@ function StaffOrders() {
             }
 
             setErrore('');
-            setOrdini(dati.ordini || []);
+            setOrdini(filtraOrdiniStaff(dati.ordini || []));
             setUltimoAggiornamento(new Date().toLocaleTimeString('it-IT', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -92,6 +112,23 @@ function StaffOrders() {
             }
 
             setErrore('');
+            if (stato === 'Consegnato') {
+                setOrdini((ordiniCorrenti) => {
+                    return ordiniCorrenti.map((ordine) => {
+                        if (ordine._id !== ordineId) {
+                            return ordine;
+                        }
+
+                        return dati.ordine || {
+                            ...ordine,
+                            stato,
+                        };
+                    });
+                });
+                nascondiOrdineConsegnato(ordineId);
+                return;
+            }
+
             await caricaOrdini(false);
         } catch (errore) {
             setErrore('Errore durante aggiornamento stato');
@@ -198,11 +235,18 @@ function StaffOrders() {
                                 </CardContent>
                             </Card>
                         ) : (
-                            ordini.map((ordine) => (
+                            ordini.map((ordine) => {
+                                const ordineInUscita = ordiniInUscita.includes(ordine._id);
+
+                                return (
                                 <Card key={ordine._id} sx={{
                                     backgroundColor: '#242424',
                                     borderRadius: '18px',
                                     border: '1px solid rgba(255,132,0,0.24)',
+                                    opacity: ordineInUscita ? 0 : 1,
+                                    transform: ordineInUscita ? 'translateY(8px) scale(0.98)' : 'translateY(0) scale(1)',
+                                    transition: 'opacity 220ms ease, transform 220ms ease',
+                                    pointerEvents: ordineInUscita ? 'none' : 'auto',
                                 }}>
                                     <CardContent sx={{ p: 3 }}>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, mb: 2 }}>
@@ -268,7 +312,8 @@ function StaffOrders() {
                                         </Box>
                                     </CardContent>
                                 </Card>
-                            ))
+                                );
+                            })
                         )}
                     </Box>
                 )}
