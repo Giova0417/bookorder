@@ -1,11 +1,11 @@
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import burger from '../assets/Burger.png';
+import { Link } from 'react-router-dom';
 
 function Body() {
   return (
     <Box sx={{
-      // REGOLE ANTI-SCORRIMENTO DEFINITIVE
       width:'100%',
       maxWidth: '100vw',
       minHeight: {xs : '60vh', md : '70vh'},
@@ -69,8 +69,8 @@ function Body() {
           in un morbido panino. Riserva il tuo tavolo!
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Button variant="contained" color="warning" sx={{
+        <Box  sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Button component={Link} to='/menu' variant="contained" color="warning" sx={{
             height: '52px',
             px: 4,
             borderRadius: '300px',
@@ -81,9 +81,9 @@ function Body() {
               transform: 'translateY(-2px)',
               boxShadow: '0 12px 32px rgba(255,132,0,0.6)',
             },
-            transition: 'all 0.2s',
+            transition: 'all 1.3s',
           }}>
-            Prenota ora
+            ORDINA ORA
           </Button>
         </Box>
       </Box>
