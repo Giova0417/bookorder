@@ -11,6 +11,8 @@ import {
     Typography,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
+import { io } from 'socket.io-client';
+import { API_BASE_URL, apiFetch, refreshAccessToken } from '../api/client';
 
 const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
 
@@ -146,11 +148,8 @@ function Ordini() {
                 setLoading(true);
             }
 
-            const risposta = await fetch('http://localhost:5000/api/order', {
+            const risposta = await apiFetch('/api/order', {
                 method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
             });
 
             const dati = await risposta.json();
@@ -179,12 +178,38 @@ function Ordini() {
 
     useEffect(() => {
         caricaOrdini(true);
+        const token = localStorage.getItem('token');
 
-        const interval = setInterval(() => {
+        if (!token) {
+            return undefined;
+        }
+
+        let active = true;
+        const socket = io(API_BASE_URL, {
+            auth: { token },
+        });
+
+        const aggiornaOrdini = () => {
             caricaOrdini(false);
-        }, 3000);
+        };
 
-        return () => clearInterval(interval);
+        socket.on('orderCreated', aggiornaOrdini);
+        socket.on('orderUpdated', aggiornaOrdini);
+        socket.on('connect_error', async () => {
+            const nuovoToken = await refreshAccessToken();
+
+            if (!active || !nuovoToken) {
+                return;
+            }
+
+            socket.auth = { token: nuovoToken };
+            socket.connect();
+        });
+
+        return () => {
+            active = false;
+            socket.disconnect();
+        };
     }, []);
 
     const ordiniConNumero = ordini.map((ordine, index) => ({

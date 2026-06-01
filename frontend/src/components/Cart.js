@@ -17,6 +17,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { Link } from 'react-router-dom';
 import { useCart } from './CartContext';
+import { apiFetch } from '../api/client';
 const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
 
 const quantityButtonSx = {
@@ -52,13 +53,8 @@ function Cart() {
                 setErrore('Devi effettuare il login prima di ordinare');
                 return;
             }
-            const risposta = await fetch('http://localhost:5000/api/order', {
+            const risposta = await apiFetch('/api/order', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-
                 body: JSON.stringify({
                     cartItems,
                     numeroTavolo

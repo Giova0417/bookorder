@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, Box, Typography, Card, CardContent, Button, IconButton } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
+import { Grid, Box, Typography, Card, CardContent, Button } from '@mui/material';
 import { useCart } from './CartContext';
 const prodottiMenu = [
     {
@@ -240,23 +238,6 @@ const prodottiMenu = [
 
 
 const categorie = ['Burger', 'Panini speciali', 'Bevande', 'Fritti', 'Salse', 'Dolci'];
-
-const quantityButtonSx = {
-    backgroundColor: '#1a1a1a',
-    color: '#ff8400',
-    borderRadius: '10px',
-    width: 64,
-    minWidth: 64,
-    height: 62,
-    minHeight: 62,
-    p: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    '&:hover': {
-        backgroundColor: '#111111',
-    },
-};
 
 function Menu() {
     const [prodottiMenuFiltered, setProdottiMenuFiltered] = useState([]);

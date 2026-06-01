@@ -6,6 +6,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from './CartContext'
+import { API_BASE_URL, apiFetch } from '../api/client';
 
 
 function Navbar() {
@@ -29,11 +30,8 @@ function Navbar() {
       return;
     }
     try {
-      const risposta = await fetch('http://localhost:5000/api/auth/me', {
+      const risposta = await apiFetch('/api/auth/me', {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
       });
       if (!risposta.ok) {
         localStorage.removeItem('token');
@@ -51,7 +49,16 @@ function Navbar() {
 
     VerifySession();
   }, [location.pathname]);
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (errore) {
+      console.log('Logout server non disponibile');
+    }
+
     localStorage.removeItem('token');
     setUtente(null);
   };
@@ -74,6 +81,17 @@ function Navbar() {
           Book&Order
         </Typography>
         {/* I pulsanti di Login e carrello a destra */}
+        {utente?.role === 'staff' && (
+          <Button
+            color="inherit"
+            component={Link}
+            to="/staff"
+            sx={{ fontWeight: 900 }}
+          >
+            Staff
+          </Button>
+        )}
+
         <IconButton
           color="inherit"
           size="large"

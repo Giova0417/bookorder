@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import '../Login.css';
 import { Box, Typography, TextField, Card, CardContent, Button , Alert} from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../api/client';
 
 function Login() {
    const [errore, setErrore] = useState('');
@@ -12,8 +13,9 @@ function Login() {
    const handleLogin = async () => {
       try {
          setErrore('');
-         const risposta = await fetch('http://localhost:5000/api/auth/login', {
+         const risposta = await fetch(`${API_BASE_URL}/api/auth/login`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                'Content-Type': 'application/json'
             },
@@ -33,7 +35,7 @@ function Login() {
          }
 
          localStorage.setItem('token', dati.token);
-         navigate('/menu');
+         navigate(dati.utente?.role === 'staff' ? '/staff' : '/menu');
 
       } catch (error) {
          setErrore('Errore di connessione al server');
