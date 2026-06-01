@@ -22,7 +22,7 @@ function statoSx(stato) {
         };
     }
 
-    if (stato === 'Pronto' || stato === 'Completato') {
+    if (stato === 'Pronto' || stato === 'Consegnato' || stato === 'Completato') {
         return {
             backgroundColor: '#2e7d32',
             color: '#fff',
