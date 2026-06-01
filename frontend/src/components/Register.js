@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import '../Login.css';
-import { Box, Typography, TextField, Card, CardContent, Button, Alert } from '@mui/material';
+import { Box, Typography, TextField, Card, CardContent, Button, Alert, MenuItem } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../api/client';
 
 function Register() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState('cliente');
+    const [staffCode, setStaffCode] = useState('');
     const [errore, setErrore] = useState('');
     const navigate = useNavigate();
 
@@ -14,7 +17,7 @@ function Register() {
         try {
             setErrore('');
 
-            const risposta = await fetch('http://localhost:5000/api/auth/register', {
+            const risposta = await fetch(`${API_BASE_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -23,6 +26,8 @@ function Register() {
                     name,
                     email,
                     password,
+                    role,
+                    staffCode,
                 }),
             });
 
@@ -118,6 +123,31 @@ function Register() {
                         variant="standard"
                         sx={{ p: 2, background: 'rgb(255, 255, 255)', borderRadius: 5 }}
                     />
+
+                    <TextField
+                        select
+                        label="Tipo account"
+                        value={role}
+                        onChange={(event) => setRole(event.target.value)}
+                        variant="standard"
+                        fullWidth
+                        sx={{ p: 2, background: 'rgb(255, 255, 255)', borderRadius: 5 }}
+                    >
+                        <MenuItem value="cliente">Cliente</MenuItem>
+                        <MenuItem value="staff">Staff</MenuItem>
+                    </TextField>
+
+                    {role === 'staff' && (
+                        <TextField
+                            label="Codice staff"
+                            value={staffCode}
+                            onChange={(event) => setStaffCode(event.target.value)}
+                            type="password"
+                            fullWidth
+                            variant="standard"
+                            sx={{ p: 2, background: 'rgb(255, 255, 255)', borderRadius: 5 }}
+                        />
+                    )}
 
                     {errore && <Alert severity="error">{errore}</Alert>}
 

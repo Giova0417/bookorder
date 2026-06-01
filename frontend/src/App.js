@@ -9,6 +9,7 @@ import Login from './components/Login'
 import Register from './components/Register'
 import Cart from './components/Cart'
 import Ordini from './components/Ordini'
+import StaffOrders from './components/StaffOrders'
 import { CartProvider } from './components/CartContext';
 
 function HomePage() {
@@ -34,6 +35,7 @@ function App() {
           <Route path="/register" element={<Register />}/>
           <Route path="/cart" element={<Cart />}/>
           <Route path="/ordini" element={<Ordini />}/>
+          <Route path="/staff" element={<StaffOrders />}/>
       </Routes>
       </Box>
       </BrowserRouter>
