@@ -64,12 +64,13 @@ function Navbar() {
   };
   const subtotal = cartItems.reduce((sum, item) => sum + item.prezzo * item.quantita, 0);
   const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
+  const isStaff = utente?.role === 'staff';
 
   return (
     // AppBar 
     <AppBar position="fixed" color="warning" sx={{ maxWidth: '100%', background: 'linear-gradient(135deg, #000000 0%, #1c1816 50%, #000000 100%)', }}>
       <Toolbar >
-        <Typography variant="h4" component={Link} to="/" sx={{
+        <Typography variant="h4" component={isStaff ? 'div' : Link} to={isStaff ? undefined : '/'} sx={{
           flexGrow: 1,
           fontFamily: '"Segoe UI Black", "Arial Black", sans-serif',
           fontWeight: 900,
@@ -77,6 +78,7 @@ function Navbar() {
           color: '#ffffff',
           textDecoration: 'none',
           textShadow: '0 3px 10px rgba(0,0,0,0.45)',
+          cursor: isStaff ? 'default' : 'pointer',
         }}>
           Book&Order
         </Typography>
@@ -91,7 +93,7 @@ function Navbar() {
             Staff
           </Button>
         )}
-
+        {utente?.role !== 'staff' && (
         <IconButton
           color="inherit"
           size="large"
@@ -100,7 +102,8 @@ function Navbar() {
         >
           <ReceiptLongIcon />
         </IconButton>
-
+        )}
+        {utente?.role !== 'staff' && (
         <IconButton color="inherit"
           size="large"
           onClick={handleCartClick}>
@@ -118,6 +121,7 @@ function Navbar() {
             <ShoppingCartIcon />
           </Badge>
         </IconButton>
+         )}
         <Popover
           slotProps={{
             paper: {
