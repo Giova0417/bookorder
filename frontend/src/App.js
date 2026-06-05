@@ -11,7 +11,6 @@ import Cart from './components/Cart'
 import Ordini from './components/Ordini'
 import StaffOrders from './components/StaffOrders'
 import { CartProvider } from './components/CartContext';
-
 function HomePage() {
   return (
     <>
@@ -29,7 +28,7 @@ function App() {
       <Toolbar sx={{ backgroundColor: '#1a1a1a' }} />
        <Box sx={{ minHeight: 'calc(100vh - 64px)', backgroundColor: '#1a1a1a' }}>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/"   element={<HomePage />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/login" element={<Login />}/>
           <Route path="/register" element={<Register />}/>

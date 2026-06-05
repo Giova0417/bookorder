@@ -17,7 +17,8 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { Link } from 'react-router-dom';
 import { useCart } from './CartContext';
-import { apiFetch } from '../api/client';
+import { getAccessToken } from '../api/client';
+import { creaOrdine } from '../api/orders';
 const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
 
 const quantityButtonSx = {
@@ -43,7 +44,7 @@ function Cart() {
         try {
             setErrore('');
             setSuccesso('');
-            const token = localStorage.getItem('token');
+            const token = getAccessToken();
             if(!numeroTavolo){
                 setErrore('Seleziona il tavolo');
                 return;
@@ -53,27 +54,13 @@ function Cart() {
                 setErrore('Devi effettuare il login prima di ordinare');
                 return;
             }
-            const risposta = await apiFetch('/api/order', {
-                method: 'POST',
-                body: JSON.stringify({
-                    cartItems,
-                    numeroTavolo
-
-                })
-            })
-            const dati = await risposta.json();
-
-            if (!risposta.ok) {
-                setErrore(dati.message || 'Ordine non registrato. Riprova.');
-                return;
-            }
-
+            const dati = await creaOrdine({ cartItems, numeroTavolo });
             clearCart();
             setSuccesso(dati.message || 'ORDINE EFFETTUATO CON SUCCESSO');
             console.log('Ordine creato:', dati.ordine);
         }
         catch (errore) {
-            setErrore('Ordine non registrato. Controlla la connessione e riprova.');
+            setErrore(errore.message || 'Ordine non registrato. Controlla la connessione e riprova.');
             setTimeout(() => {
                 setErrore('');
             }, 3000);

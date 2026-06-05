@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Alert,
     Box,
@@ -11,10 +11,12 @@ import {
     Typography,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, apiFetch, refreshAccessToken } from '../api/client';
+import { getAccessToken } from '../api/client';
+import { aggiornaStatoOrdineStaff, caricaOrdiniStaff } from '../api/orders';
+import { collegaRealtimeOrdini } from '../api/realtime';
 
 const statiOrdine = ['In preparazione', 'Pronto', 'Consegnato'];
+const TEMPO_USCITA_ORDINE = 260;
 const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
 
 function totaleOrdine(ordine) {
@@ -38,9 +40,28 @@ function StaffOrders() {
     const [errore, setErrore] = useState('');
     const [loading, setLoading] = useState(true);
     const [ultimoAggiornamento, setUltimoAggiornamento] = useState('');
+    const [ordiniInUscita, setOrdiniInUscita] = useState([]);
+    const ordiniInUscitaRef = useRef(new Set());
 
-    const caricaOrdini = async (mostraLoading) => {
-        const token = localStorage.getItem('token');
+    const filtraOrdiniStaff = useCallback((listaOrdini) => {
+        return listaOrdini.filter((ordine) => {
+            return ordine.stato !== 'Consegnato' || ordiniInUscitaRef.current.has(ordine._id);
+        });
+    }, []);
+
+    const nascondiOrdineConsegnato = useCallback((ordineId) => {
+        ordiniInUscitaRef.current.add(ordineId);
+        setOrdiniInUscita(Array.from(ordiniInUscitaRef.current));
+
+        window.setTimeout(() => {
+            ordiniInUscitaRef.current.delete(ordineId);
+            setOrdiniInUscita(Array.from(ordiniInUscitaRef.current));
+            setOrdini((ordiniCorrenti) => ordiniCorrenti.filter((ordine) => ordine._id !== ordineId));
+        }, TEMPO_USCITA_ORDINE);
+    }, []);
+
+    const caricaOrdini = useCallback(async (mostraLoading) => {
+        const token = getAccessToken();
 
         if (!token) {
             setErrore('Devi effettuare il login come staff');
@@ -53,19 +74,10 @@ function StaffOrders() {
                 setLoading(true);
             }
 
-            const risposta = await apiFetch('/api/order/staff', {
-                method: 'GET',
-            });
-            const dati = await risposta.json();
-
-            if (!risposta.ok) {
-                setErrore(dati.message || 'Ordini staff non disponibili');
-                setOrdini([]);
-                return;
-            }
+            const ordiniCaricati = await caricaOrdiniStaff();
 
             setErrore('');
-            setOrdini(dati.ordini || []);
+            setOrdini(filtraOrdiniStaff(ordiniCaricati));
             setUltimoAggiornamento(new Date().toLocaleTimeString('it-IT', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -76,60 +88,46 @@ function StaffOrders() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filtraOrdiniStaff]);
 
     const cambiaStato = async (ordineId, stato) => {
         try {
-            const risposta = await apiFetch(`/api/order/staff/${ordineId}/stato`, {
-                method: 'PATCH',
-                body: JSON.stringify({ stato }),
-            });
-            const dati = await risposta.json();
+            const dati = await aggiornaStatoOrdineStaff(ordineId, stato);
+            setErrore('');
+            if (stato === 'Consegnato') {
+                setOrdini((ordiniCorrenti) => {
+                    return ordiniCorrenti.map((ordine) => {
+                        if (ordine._id !== ordineId) {
+                            return ordine;
+                        }
 
-            if (!risposta.ok) {
-                setErrore(dati.message || 'Stato non aggiornato');
+                        return dati.ordine || {
+                            ...ordine,
+                            stato,
+                        };
+                    });
+                });
+                nascondiOrdineConsegnato(ordineId);
                 return;
             }
 
-            setErrore('');
             await caricaOrdini(false);
         } catch (errore) {
-            setErrore('Errore durante aggiornamento stato');
+            setErrore(errore.message || 'Errore durante aggiornamento stato');
         }
     };
 
     useEffect(() => {
         caricaOrdini(true);
-        const token = localStorage.getItem('token');
+        const token = getAccessToken();
 
         if (!token) {
             return undefined;
         }
 
-        let active = true;
-        const socket = io(API_BASE_URL, {
-            auth: { token },
-        });
         const aggiornaOrdini = () => caricaOrdini(false);
-
-        socket.on('orderCreated', aggiornaOrdini);
-        socket.on('orderUpdated', aggiornaOrdini);
-        socket.on('connect_error', async () => {
-            const nuovoToken = await refreshAccessToken();
-
-            if (!active || !nuovoToken) {
-                return;
-            }
-
-            socket.auth = { token: nuovoToken };
-            socket.connect();
-        });
-
-        return () => {
-            active = false;
-            socket.disconnect();
-        };
-    }, []);
+        return collegaRealtimeOrdini(token, aggiornaOrdini);
+    }, [caricaOrdini]);
 
     const ordiniInPreparazione = ordini.filter((ordine) => ordine.stato === 'In preparazione').length;
     const ordiniPronti = ordini.filter((ordine) => ordine.stato === 'Pronto').length;
@@ -198,11 +196,18 @@ function StaffOrders() {
                                 </CardContent>
                             </Card>
                         ) : (
-                            ordini.map((ordine) => (
+                            ordini.map((ordine) => {
+                                const ordineInUscita = ordiniInUscita.includes(ordine._id);
+
+                                return (
                                 <Card key={ordine._id} sx={{
                                     backgroundColor: '#242424',
                                     borderRadius: '18px',
                                     border: '1px solid rgba(255,132,0,0.24)',
+                                    opacity: ordineInUscita ? 0 : 1,
+                                    transform: ordineInUscita ? 'translateY(8px) scale(0.98)' : 'translateY(0) scale(1)',
+                                    transition: 'opacity 220ms ease, transform 220ms ease',
+                                    pointerEvents: ordineInUscita ? 'none' : 'auto',
                                 }}>
                                     <CardContent sx={{ p: 3 }}>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, mb: 2 }}>
@@ -211,7 +216,7 @@ function StaffOrders() {
                                                     Tavolo {ordine.numeroTavolo}
                                                 </Typography>
                                                 <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', mt: 0.5 }}>
-                                                    Ordine {ordine.id_ordine}
+                                                    Ordine {ordine._id}
                                                 </Typography>
                                             </Box>
                                             <Chip label={ordine.stato} sx={{ ...statoSx(ordine.stato), fontWeight: 900 }} />
@@ -268,7 +273,8 @@ function StaffOrders() {
                                         </Box>
                                     </CardContent>
                                 </Card>
-                            ))
+                                );
+                            })
                         )}
                     </Box>
                 )}

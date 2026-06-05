@@ -3,6 +3,24 @@ const Utente = require('../models/Utente');
 const RefreshToken = require('../models/RefreshToken');
 const tokenService = require('../services/tokenService');
 
+function serializeUser(utente) {
+  return {
+    id: utente._id,
+    name: utente.name,
+    email: utente.email,
+    role: utente.role,
+  };
+}
+
+function buildAuthResponse(message, utente, accessToken) {
+  return {
+    message,
+    accessToken,
+    token: accessToken,
+    utente: serializeUser(utente),
+  };
+}
+
 async function issueRefreshToken(res, utente) {
   const refreshToken = tokenService.createRefreshToken();
 
@@ -12,7 +30,21 @@ async function issueRefreshToken(res, utente) {
     expiresAt: tokenService.getRefreshTokenExpiresAt(),
   });
 
-  res.cookie('refreshToken', refreshToken, tokenService.getRefreshCookieOptions());
+  res.cookie(tokenService.REFRESH_COOKIE_NAME, refreshToken, tokenService.getRefreshCookieOptions());
+}
+
+async function revokeRefreshToken(refreshToken) {
+  if (!refreshToken) {
+    return;
+  }
+
+  await RefreshToken.findOneAndUpdate(
+    {
+      tokenHash: tokenService.hashRefreshToken(refreshToken),
+      revokedAt: null,
+    },
+    { revokedAt: new Date() }
+  );
 }
 
 async function me(req, res) {
@@ -46,7 +78,6 @@ async function register(req, res) {
     }
 
     const passwordCriptata = await bcrypt.hash(password, 10);
-
     const nuovoUtente = await Utente.create({
       name,
       email,
@@ -56,12 +87,7 @@ async function register(req, res) {
 
     return res.status(201).json({
       message: 'Utente registrato',
-      utente: {
-        id: nuovoUtente._id,
-        name: nuovoUtente.name,
-        email: nuovoUtente.email,
-        role: nuovoUtente.role,
-      },
+      utente: serializeUser(nuovoUtente),
     });
   } catch (errore) {
     return res.status(500).json({ message: 'Errore durante la registrazione' });
@@ -88,20 +114,10 @@ async function login(req, res) {
       return res.status(400).json({ message: 'Email o password errate' });
     }
 
-    const token = tokenService.createAccessToken(utente);
+    const accessToken = tokenService.createAccessToken(utente);
     await issueRefreshToken(res, utente);
 
-    return res.status(200).json({
-      message: 'Autenticazione effettuata',
-      accessToken: token,
-      token,
-      utente: {
-        id: utente._id,
-        name: utente.name,
-        email: utente.email,
-        role: utente.role,
-      },
-    });
+    return res.status(200).json(buildAuthResponse('Autenticazione effettuata', utente, accessToken));
   } catch (errore) {
     return res.status(500).json({ message: 'Errore del server' });
   }
@@ -131,13 +147,13 @@ async function refresh(req, res) {
     storedToken.revokedAt = new Date();
     await storedToken.save();
 
-    const token = tokenService.createAccessToken(storedToken.user);
+    const accessToken = tokenService.createAccessToken(storedToken.user);
     await issueRefreshToken(res, storedToken.user);
 
     return res.status(200).json({
       message: 'Access token rigenerato',
-      accessToken: token,
-      token,
+      accessToken,
+      token: accessToken,
     });
   } catch (errore) {
     return res.status(500).json({ message: 'Errore durante il refresh della sessione' });
@@ -147,19 +163,10 @@ async function refresh(req, res) {
 async function logout(req, res) {
   try {
     const refreshToken = tokenService.getRefreshTokenFromRequest(req);
-
-    if (refreshToken) {
-      await RefreshToken.findOneAndUpdate(
-        {
-          tokenHash: tokenService.hashRefreshToken(refreshToken),
-          revokedAt: null,
-        },
-        { revokedAt: new Date() }
-      );
-    }
+    await revokeRefreshToken(refreshToken);
 
     const { maxAge, ...clearCookieOptions } = tokenService.getRefreshCookieOptions();
-    res.clearCookie('refreshToken', clearCookieOptions);
+    res.clearCookie(tokenService.REFRESH_COOKIE_NAME, clearCookieOptions);
 
     return res.status(200).json({ message: 'Logout effettuato' });
   } catch (errore) {

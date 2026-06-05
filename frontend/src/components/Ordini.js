@@ -11,8 +11,9 @@ import {
     Typography,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, apiFetch, refreshAccessToken } from '../api/client';
+import { getAccessToken } from '../api/client';
+import { caricaOrdiniCliente } from '../api/orders';
+import { collegaRealtimeOrdini } from '../api/realtime';
 
 const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
 
@@ -134,7 +135,7 @@ function Ordini() {
     const [ultimoAggiornamento, setUltimoAggiornamento] = useState('');
 
     const caricaOrdini = async (mostraLoading) => {
-        const token = localStorage.getItem('token');
+        const token = getAccessToken();
 
         if (!token) {
             setErrore('Devi effettuare il login per vedere i tuoi ordini');
@@ -148,20 +149,10 @@ function Ordini() {
                 setLoading(true);
             }
 
-            const risposta = await apiFetch('/api/order', {
-                method: 'GET',
-            });
-
-            const dati = await risposta.json();
-
-            if (!risposta.ok) {
-                setErrore(dati.message || 'Ordini non disponibili');
-                setOrdini([]);
-                return;
-            }
+            const ordiniCaricati = await caricaOrdiniCliente();
 
             setErrore('');
-            setOrdini(dati.ordini || []);
+            setOrdini(ordiniCaricati);
             setUltimoAggiornamento(new Date().toLocaleTimeString('it-IT', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -169,7 +160,7 @@ function Ordini() {
             }));
         }
         catch (errore) {
-            setErrore('Errore di connessione al server');
+            setErrore(errore.message || 'Errore di connessione al server');
         }
         finally {
             setLoading(false);
@@ -178,38 +169,14 @@ function Ordini() {
 
     useEffect(() => {
         caricaOrdini(true);
-        const token = localStorage.getItem('token');
+        const token = getAccessToken();
 
         if (!token) {
             return undefined;
         }
 
-        let active = true;
-        const socket = io(API_BASE_URL, {
-            auth: { token },
-        });
-
-        const aggiornaOrdini = () => {
-            caricaOrdini(false);
-        };
-
-        socket.on('orderCreated', aggiornaOrdini);
-        socket.on('orderUpdated', aggiornaOrdini);
-        socket.on('connect_error', async () => {
-            const nuovoToken = await refreshAccessToken();
-
-            if (!active || !nuovoToken) {
-                return;
-            }
-
-            socket.auth = { token: nuovoToken };
-            socket.connect();
-        });
-
-        return () => {
-            active = false;
-            socket.disconnect();
-        };
+        const aggiornaOrdini = () => caricaOrdini(false);
+        return collegaRealtimeOrdini(token, aggiornaOrdini);
     }, []);
 
     const ordiniConNumero = ordini.map((ordine, index) => ({

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import '../Login.css';
 import { Box, Typography, TextField, Card, CardContent, Button, Alert, MenuItem } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
-import { API_BASE_URL } from '../api/client';
+import { registraUtente } from '../api/auth';
 
 function Register() {
     const [name, setName] = useState('');
@@ -16,34 +16,10 @@ function Register() {
     const handleRegister = async () => {
         try {
             setErrore('');
-
-            const risposta = await fetch(`${API_BASE_URL}/api/auth/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name,
-                    email,
-                    password,
-                    role,
-                    staffCode,
-                }),
-            });
-
-            const dati = await risposta.json();
-
-            if (!risposta.ok) {
-                setErrore(dati.message || 'Registrazione non riuscita');
-                setTimeout(() => {
-                    setErrore('');
-                }, 3000);
-                return;
-            }
-
+            await registraUtente({ name, email, password, role, staffCode });
             navigate('/login');
         } catch (error) {
-            setErrore('Errore di connessione al server');
+            setErrore(error.message || 'Errore di connessione al server');
             setTimeout(() => {
                 setErrore('');
             }, 3000);

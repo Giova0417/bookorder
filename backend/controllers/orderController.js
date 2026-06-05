@@ -1,10 +1,39 @@
 const { Ordine, statiOrdine } = require('../models/Ordine');
 const realtimeService = require('../services/realtimeService');
 
+function isValidOrderStatus(stato) {
+  return statiOrdine.includes(stato);
+}
+
+function notifyOrderCreated(ordine, userId) {
+  realtimeService.emitToUser(userId, 'orderCreated', {
+    orderId: ordine._id,
+    stato: ordine.stato,
+  });
+
+  realtimeService.emitToStaff('orderCreated', {
+    orderId: ordine._id,
+    stato: ordine.stato,
+    numeroTavolo: ordine.numeroTavolo,
+  });
+}
+
+function notifyOrderUpdated(ordine) {
+  realtimeService.emitToUser(ordine.idUtente, 'orderUpdated', {
+    orderId: ordine._id,
+    stato: ordine.stato,
+  });
+
+  realtimeService.emitToStaff('orderUpdated', {
+    orderId: ordine._id,
+    stato: ordine.stato,
+    numeroTavolo: ordine.numeroTavolo,
+  });
+}
+
 async function getMyOrders(req, res) {
   try {
     const ordini = await Ordine.find({ idUtente: req.userId }).sort({ _id: -1 }).lean();
-
     return res.status(200).json({ ordini });
   } catch (errore) {
     console.log(errore);
@@ -30,15 +59,7 @@ async function createOrder(req, res) {
       numeroTavolo,
     });
 
-    realtimeService.emitToUser(req.userId, 'orderCreated', {
-      orderId: ordine._id,
-      stato: ordine.stato,
-    });
-    realtimeService.emitToStaff('orderCreated', {
-      orderId: ordine._id,
-      stato: ordine.stato,
-      numeroTavolo: ordine.numeroTavolo,
-    });
+    notifyOrderCreated(ordine, req.userId);
 
     return res.status(201).json({
       message: 'ORDINE EFFETTUATO CON SUCCESSO',
@@ -54,7 +75,7 @@ async function updateOrderStatus(req, res) {
   try {
     const { stato } = req.body;
 
-    if (!statiOrdine.includes(stato)) {
+    if (!isValidOrderStatus(stato)) {
       return res.status(400).json({ message: 'Stato ordine non valido' });
     }
 
@@ -86,7 +107,6 @@ async function updateOrderStatus(req, res) {
 async function getAllOrders(req, res) {
   try {
     const ordini = await Ordine.find({}).sort({ _id: -1 }).lean();
-
     return res.status(200).json({ ordini });
   } catch (errore) {
     console.log(errore);
@@ -98,7 +118,7 @@ async function updateAnyOrderStatus(req, res) {
   try {
     const { stato } = req.body;
 
-    if (!statiOrdine.includes(stato)) {
+    if (!isValidOrderStatus(stato)) {
       return res.status(400).json({ message: 'Stato ordine non valido' });
     }
 
@@ -112,15 +132,7 @@ async function updateAnyOrderStatus(req, res) {
       return res.status(404).json({ message: 'Ordine non trovato' });
     }
 
-    realtimeService.emitToUser(ordine.idUtente, 'orderUpdated', {
-      orderId: ordine._id,
-      stato: ordine.stato,
-    });
-    realtimeService.emitToStaff('orderUpdated', {
-      orderId: ordine._id,
-      stato: ordine.stato,
-      numeroTavolo: ordine.numeroTavolo,
-    });
+    notifyOrderUpdated(ordine);
 
     return res.status(200).json({
       message: 'Stato ordine aggiornato',

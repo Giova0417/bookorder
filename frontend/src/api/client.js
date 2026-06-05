@@ -1,5 +1,29 @@
 export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+const ACCESS_TOKEN_STORAGE_KEY = 'token';
+
+export function getAccessToken() {
+  return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+}
+
+export function saveAccessToken(token) {
+  if (token) {
+    localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
+  }
+}
+
+export function clearAccessToken() {
+  localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+}
+
+export function getAccessTokenFromResponse(dati) {
+  return dati.accessToken || dati.token;
+}
+
+export async function readJson(risposta) {
+  return risposta.json().catch(() => ({}));
+}
+
 export async function refreshAccessToken() {
   const risposta = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
     method: 'POST',
@@ -7,15 +31,15 @@ export async function refreshAccessToken() {
   });
 
   if (!risposta.ok) {
-    localStorage.removeItem('token');
+    clearAccessToken();
     return null;
   }
 
-  const dati = await risposta.json();
-  const nuovoToken = dati.token || dati.accessToken;
+  const dati = await readJson(risposta);
+  const nuovoToken = getAccessTokenFromResponse(dati);
 
   if (nuovoToken) {
-    localStorage.setItem('token', nuovoToken);
+    saveAccessToken(nuovoToken);
   }
 
   return nuovoToken;
@@ -39,8 +63,7 @@ function buildHeaders(options, token) {
 
 export async function apiFetch(path, options = {}) {
   const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
-  const token = localStorage.getItem('token');
-  const headers = buildHeaders(options, token);
+  const headers = buildHeaders(options, getAccessToken());
 
   const risposta = await fetch(url, {
     ...options,

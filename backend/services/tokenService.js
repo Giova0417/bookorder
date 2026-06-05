@@ -15,7 +15,6 @@ function createAccessToken(utente) {
     { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
   );
 }
-
 function verifyAccessToken(token) {
   return jwt.verify(token, process.env.JWT_SECRET);
 }

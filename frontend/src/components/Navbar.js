@@ -4,9 +4,10 @@ import { Grow, Box, AppBar, Toolbar, Typography, IconButton, Button, Popover, Ba
 import PersonIcon from '@mui/icons-material/Person';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from './CartContext'
-import { API_BASE_URL, apiFetch } from '../api/client';
+import { clearAccessToken, getAccessToken } from '../api/client';
+import { caricaUtenteCorrente, logoutUtente } from '../api/auth';
 
 
 function Navbar() {
@@ -15,6 +16,7 @@ function Navbar() {
   const location = useLocation();
   const [cartOpen, setCartOpen] = useState(false);
   const [cartAnchor, setCartAnchor] = useState(null);
+  const navigate = useNavigate();
   const handleCartClick = (event) => {
     setCartAnchor(event.currentTarget);
     setCartOpen(true);
@@ -24,24 +26,17 @@ function Navbar() {
     setCartAnchor(null);
   };
   const VerifySession = async () => {
-    const token = localStorage.getItem('token');
+    const token = getAccessToken();
     if (!token) {
       setUtente(null);
       return;
     }
     try {
-      const risposta = await apiFetch('/api/auth/me', {
-        method: 'GET',
-      });
-      if (!risposta.ok) {
-        localStorage.removeItem('token');
-        setUtente(null);
-        return;
-      }
-      const dati = await risposta.json();
-      setUtente(dati.utente);
+      const utenteCorrente = await caricaUtenteCorrente();
+      setUtente(utenteCorrente);
     } catch (errore) {
-      setUtente(null)
+      clearAccessToken();
+      setUtente(null);
     }
   };
 
@@ -51,25 +46,24 @@ function Navbar() {
   }, [location.pathname]);
   const handleLogout = async () => {
     try {
-      await fetch(`${API_BASE_URL}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      await logoutUtente();
     } catch (errore) {
       console.log('Logout server non disponibile');
+      clearAccessToken();
     }
 
-    localStorage.removeItem('token');
+    navigate('/');
     setUtente(null);
   };
   const subtotal = cartItems.reduce((sum, item) => sum + item.prezzo * item.quantita, 0);
   const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
+  const isStaff = utente?.role === 'staff';
 
   return (
     // AppBar 
     <AppBar position="fixed" color="warning" sx={{ maxWidth: '100%', background: 'linear-gradient(135deg, #000000 0%, #1c1816 50%, #000000 100%)', }}>
       <Toolbar >
-        <Typography variant="h4" component={Link} to="/" sx={{
+        <Typography variant="h4" component={isStaff ? 'div' : Link} to={isStaff ? undefined : '/'} sx={{
           flexGrow: 1,
           fontFamily: '"Segoe UI Black", "Arial Black", sans-serif',
           fontWeight: 900,
@@ -77,6 +71,7 @@ function Navbar() {
           color: '#ffffff',
           textDecoration: 'none',
           textShadow: '0 3px 10px rgba(0,0,0,0.45)',
+          cursor: isStaff ? 'default' : 'pointer',
         }}>
           Book&Order
         </Typography>
@@ -91,7 +86,7 @@ function Navbar() {
             Staff
           </Button>
         )}
-
+        {utente?.role !== 'staff' && (
         <IconButton
           color="inherit"
           size="large"
@@ -100,7 +95,8 @@ function Navbar() {
         >
           <ReceiptLongIcon />
         </IconButton>
-
+        )}
+        {utente?.role !== 'staff' && (
         <IconButton color="inherit"
           size="large"
           onClick={handleCartClick}>
@@ -118,6 +114,7 @@ function Navbar() {
             <ShoppingCartIcon />
           </Badge>
         </IconButton>
+         )}
         <Popover
           slotProps={{
             paper: {
