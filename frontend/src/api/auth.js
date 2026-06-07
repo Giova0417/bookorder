@@ -7,13 +7,12 @@ import {
   saveAccessToken,
 } from './client';
 
-async function postJson(path, body, options = {}) {
+async function postJson(path, body) {
   const risposta = await fetch(`${API_BASE_URL}${path}`, {
     method: 'POST',
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(options.headers || {}),
     },
     body: JSON.stringify(body),
   });

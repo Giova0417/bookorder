@@ -17,7 +17,7 @@ export function clearAccessToken() {
 }
 
 export function getAccessTokenFromResponse(dati) {
-  return dati.accessToken || dati.token;
+  return dati.accessToken;
 }
 
 export async function readJson(risposta) {

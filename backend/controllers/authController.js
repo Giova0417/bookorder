@@ -16,7 +16,6 @@ function buildAuthResponse(message, utente, accessToken) {
   return {
     message,
     accessToken,
-    token: accessToken,
     utente: serializeUser(utente),
   };
 }
@@ -153,7 +152,6 @@ async function refresh(req, res) {
     return res.status(200).json({
       message: 'Access token rigenerato',
       accessToken,
-      token: accessToken,
     });
   } catch (errore) {
     return res.status(500).json({ message: 'Errore durante il refresh della sessione' });

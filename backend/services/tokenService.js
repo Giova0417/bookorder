@@ -3,6 +3,7 @@ const crypto = require('crypto');
 
 const ACCESS_TOKEN_EXPIRES_IN = process.env.ACCESS_TOKEN_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_DAYS = Number(process.env.REFRESH_TOKEN_DAYS || 7);
+const REFRESH_COOKIE_NAME= 'refreshToken'
 
 function createAccessToken(utente) {
   return jwt.sign(
@@ -63,6 +64,7 @@ function getRefreshTokenFromRequest(req) {
 }
 
 module.exports = {
+  REFRESH_COOKIE_NAME,
   createAccessToken,
   verifyAccessToken,
   createRefreshToken,
