@@ -44,6 +44,9 @@ function Navbar() {
 
     VerifySession();
   }, [location.pathname]);
+
+
+  
   const handleLogout = async () => {
     try {
       await logoutUtente();
