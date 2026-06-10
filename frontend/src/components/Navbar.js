@@ -46,7 +46,7 @@ function Navbar() {
   }, [location.pathname]);
 
 
-  
+
   const handleLogout = async () => {
     try {
       await logoutUtente();
@@ -90,34 +90,34 @@ function Navbar() {
           </Button>
         )}
         {utente?.role !== 'staff' && (
-        <IconButton
-          color="inherit"
-          size="large"
-          component={Link}
-          to="/ordini"
-        >
-          <ReceiptLongIcon />
-        </IconButton>
+          <IconButton
+            color="inherit"
+            size="large"
+            component={Link}
+            to="/ordini"
+          >
+            <ReceiptLongIcon />
+          </IconButton>
         )}
         {utente?.role !== 'staff' && (
-        <IconButton color="inherit"
-          size="large"
-          onClick={handleCartClick}>
-          <Badge
-            badgeContent={totalQuantity}
-            color="warning"
-            sx={{
-              '& .MuiBadge-badge': {
-                backgroundColor: '#ff8400',
-                color: '#111',
-                fontWeight: 900,
-              },
-            }}
-          >
-            <ShoppingCartIcon />
-          </Badge>
-        </IconButton>
-         )}
+          <IconButton color="inherit"
+            size="large"
+            onClick={handleCartClick}>
+            <Badge
+              badgeContent={totalQuantity}
+              color="warning"
+              sx={{
+                '& .MuiBadge-badge': {
+                  backgroundColor: '#ff8400',
+                  color: '#111',
+                  fontWeight: 900,
+                },
+              }}
+            >
+              <ShoppingCartIcon />
+            </Badge>
+          </IconButton>
+        )}
         <Popover
           slotProps={{
             paper: {
