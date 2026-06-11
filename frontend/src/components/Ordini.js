@@ -25,21 +25,24 @@ function totaleOrdine(ordine) {
     return ordine.cartItems.reduce((sum, item) => sum + item.prezzo * item.quantita, 0);
 }
 
-// OrdineCard è un componente figlio: riceve i dati dell'ordine come "prop" dal componente genitore (Ordini).
-// Le props sono il meccanismo con cui React passa dati dall'alto verso il basso nell'albero dei componenti
-// (flusso dati unidirezionale: genitore → figlio, mai il contrario).
-// { ordine } è destructuring: equivale a scrivere function OrdineCard(props) e poi usare props.ordine.
-function OrdineCard({ ordine }) {
+// React.memo "memorizza" il componente: OrdineCard viene ri-renderizzata SOLO se
+// le sue props cambiano. Senza memo, ogni aggiornamento di stato in Ordini (il genitore)
+// causerebbe il ri-render di TUTTE le card, anche quelle non cambiate.
+// Con memo: se arriva un orderUpdated per l'ordine #3, solo quella card si aggiorna.
+//
+// React.memo fa un confronto superficiale (shallow): per ogni prop controlla
+// se il riferimento è cambiato. Ecco perché passiamo ordine dall'array originale
+// (non da ordiniConNumero che crea nuovi oggetti) e numeroOrdine come numero separato.
+const OrdineCard = React.memo(function OrdineCard({ ordine, numeroOrdine }) {
     return (
         <Card sx={{ backgroundColor: '#242424', borderRadius: '18px', border: '1px solid rgba(255,132,0,0.24)' }}>
             <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
                     <Box>
                         <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: '20px' }}>
-                            Ordine #{ordine.numeroOrdine}
+                            Ordine #{numeroOrdine}
                         </Typography>
                         <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', mt: 0.5 }}>
-                            {/* Ternario inline per gestire il plurale */}
                             {ordine.cartItems.length} {ordine.cartItems.length === 1 ? 'prodotto' : 'prodotti'}
                         </Typography>
                     </Box>
@@ -50,9 +53,6 @@ function OrdineCard({ ordine }) {
 
                 <Box sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)', my: 2 }} />
 
-                {/* .map() trasforma l'array cartItems in una lista di elementi JSX.
-                    key={`${ordine._id}-${item.id}`} combina i due ID per garantire unicità
-                    anche se lo stesso prodotto appare in ordini diversi. */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.3 }}>
                     {ordine.cartItems.map((item) => (
                         <Box key={`${ordine._id}-${item.id}`} sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 2, alignItems: 'center' }}>
@@ -82,15 +82,9 @@ function OrdineCard({ ordine }) {
             </CardContent>
         </Card>
     );
-}
+});
 
-// Ordini è il componente genitore: gestisce lo stato e passa i dati a OrdineCard tramite props.
-// Separare la logica (Ordini) dalla presentazione (OrdineCard) rende il codice più leggibile
-// e riutilizzabile — OrdineCard potrebbe essere usata anche in altre parti dell'app.
 function Ordini() {
-    // useState inizializza lo stato. React garantisce che questi valori persistano
-    // tra i re-render del componente (a differenza di variabili normali che vengono
-    // ricreate da zero ad ogni chiamata della funzione).
     const [ordini, setOrdini] = useState([]);
     const [errore, setErrore] = useState('');
     const [loading, setLoading] = useState(true);
@@ -114,25 +108,30 @@ function Ordini() {
         }
     }
 
-    // useEffect con [] vuoto: esegue il codice una sola volta, dopo il primo render.
-    // È l'equivalente React del "al caricamento della pagina".
-    // Restituisce la cleanup function di collegaRealtimeOrdini che chiude il socket
-    // quando il componente si smonta (l'utente cambia pagina).
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         caricaOrdini(true);
         const token = getAccessToken();
         if (!token) return;
-        return collegaRealtimeOrdini(token, () => caricaOrdini());
+
+        // Il callback riceve (tipo, data) da realtime.js.
+        // 'updated': il backend manda { orderId, stato } — abbiamo tutto per aggiornare
+        //            localmente senza toccare la rete. Solo la card di quell'ordine si aggiorna.
+        // 'created': è arrivato un nuovo ordine, non abbiamo i suoi dati → fetch completo.
+        return collegaRealtimeOrdini(token, (tipo, data) => {
+            if (tipo === 'updated') {
+                setOrdini((prev) => prev.map((o) =>
+                    o._id === data.orderId ? { ...o, stato: data.stato } : o
+                ));
+            } else {
+                caricaOrdini();
+            }
+        });
     }, []);
 
-    // ordiniConNumero è un dato DERIVATO dallo stato: non serve salvarlo in useState
-    // perché viene ricalcolato automaticamente ad ogni render quando ordini cambia.
-    // .map() crea un nuovo array aggiungendo la prop numeroOrdine a ogni ordine.
-    // Il numero è inverso all'indice (l'ordine più recente ha numero più alto).
-    const ordiniConNumero = ordini.map((ordine, index) => ({ ...ordine, numeroOrdine: ordini.length - index }));
-
-    // .filter() crea un nuovo array con solo gli ordini che soddisfano la condizione.
+    // ordiniConNumero serve solo al pannello sinistro per mostrare "Ordine #N".
+    // Non viene passato a OrdineCard (userebbe nuovi riferimenti rompendo React.memo).
+    const ordiniConNumero = ordini.map((o, i) => ({ ...o, numeroOrdine: ordini.length - i }));
     const ordiniInPreparazione = ordiniConNumero.filter((o) => o.stato === 'In preparazione');
 
     return (
@@ -147,13 +146,11 @@ function Ordini() {
                     <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: { xs: '32px', md: '44px' }, lineHeight: 1 }}>
                         I tuoi ordini
                     </Typography>
-                    {/* Dato derivato usato direttamente nel JSX: React lo ricalcola ad ogni render. */}
                     <Typography sx={{ color: 'rgba(0,0,0,0.66)', fontSize: { xs: '14px', md: '16px' }, mt: 1 }}>
                         {ordiniInPreparazione.length} in preparazione
                     </Typography>
                 </Box>
 
-                {/* Rendering condizionale: && mostra il componente solo se la condizione è vera. */}
                 {errore && <Alert severity="error" sx={{ mb: 3 }}>{errore}</Alert>}
 
                 {errore.includes('login') && (
@@ -171,7 +168,6 @@ function Ordini() {
                     </Box>
                 ) : (!errore || ordini.length > 0) && (
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '340px minmax(0, 1fr)' }, gap: 3, alignItems: 'start' }}>
-                        {/* Colonna sinistra: pannello degli ordini in preparazione */}
                         <Card sx={{ backgroundColor: '#242424', borderRadius: '18px', border: '1px solid rgba(255,132,0,0.24)' }}>
                             <CardContent sx={{ p: 3 }}>
                                 <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: '24px', mb: 2 }}>
@@ -194,10 +190,6 @@ function Ordini() {
                             </CardContent>
                         </Card>
 
-                        {/* Colonna destra: lista completa degli ordini.
-                            .map() su ordiniConNumero passa ogni ordine al componente figlio OrdineCard
-                            tramite la prop ordine={ordine}. OrdineCard non conosce Ordini e non può
-                            modificarne lo stato — può solo leggere i dati che riceve. */}
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                             {ordini.length === 0 ? (
                                 <Card sx={{ backgroundColor: '#242424', borderRadius: '18px', border: '1px solid rgba(255,132,0,0.24)' }}>
@@ -214,7 +206,16 @@ function Ordini() {
                                     </CardContent>
                                 </Card>
                             ) : (
-                                ordiniConNumero.map((ordine) => <OrdineCard key={ordine._id} ordine={ordine} />)
+                                // Passiamo ordine dall'array originale (riferimento stabile)
+                                // e numeroOrdine come numero separato — così React.memo
+                                // confronta correttamente e ri-renderizza solo la card cambiata.
+                                ordini.map((ordine, index) => (
+                                    <OrdineCard
+                                        key={ordine._id}
+                                        ordine={ordine}
+                                        numeroOrdine={ordini.length - index}
+                                    />
+                                ))
                             )}
                         </Box>
                     </Box>

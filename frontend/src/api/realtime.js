@@ -13,8 +13,10 @@ export function collegaRealtimeOrdini(token, onOrderChange) {
         auth: { token },
     });
 
-    socket.on('orderCreated', onOrderChange);
-    socket.on('orderUpdated', onOrderChange);
+    // Passiamo il tipo di evento e i dati al callback così il componente
+    // può decidere se fare un aggiornamento locale mirato o un fetch completo.
+    socket.on('orderCreated', (data) => onOrderChange('created', data));
+    socket.on('orderUpdated', (data) => onOrderChange('updated', data));
 
     // connect_error scatta quando la connessione fallisce — di solito perché il token JWT
     // passato in auth è scaduto. In quel caso rinnoviamo il token e riproviamo la connessione.
