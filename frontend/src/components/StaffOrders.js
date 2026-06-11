@@ -258,13 +258,13 @@ function StaffOrders() {
                                                 dal resto del testo della card. */}
                                             <Typography sx={{
                                                 ...statoSx(ordine.stato),
-                                                fontFamily: '"Courier New", Courier, monospace',
-                                                fontWeight: 700,
+                                                fontFamily: '"Segoe UI Black", "Arial Black", sans-serif',
+                                                fontWeight: 900,
                                                 fontSize: '12px',
                                                 borderRadius: '100px',
                                                 px: 2,
                                                 py: 0.6,
-                                                letterSpacing: 0.6,
+                                                letterSpacing: 0.4,
                                                 display: 'inline-block',
                                                 alignSelf: 'flex-start',
                                             }}>
