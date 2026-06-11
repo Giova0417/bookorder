@@ -120,9 +120,13 @@ function Ordini() {
         // 'created': è arrivato un nuovo ordine, non abbiamo i suoi dati → fetch completo.
         return collegaRealtimeOrdini(token, (tipo, data) => {
             if (tipo === 'updated') {
-                setOrdini((prev) => prev.map((o) =>
-                    o._id === data.orderId ? { ...o, stato: data.stato } : o
-                ));
+                setOrdini((prev) => {
+                    const existing = prev.find((o) => o._id === data.orderId);
+                    // Early return: se lo stato è già aggiornato o l'ordine non esiste,
+                    // restituiamo prev invariato → React non vede nessun cambio → nessun re-render.
+                    if (!existing || existing.stato === data.stato) return prev;
+                    return prev.map((o) => o._id === data.orderId ? { ...o, stato: data.stato } : o);
+                });
             } else {
                 caricaOrdini();
             }

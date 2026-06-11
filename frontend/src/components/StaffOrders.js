@@ -121,33 +121,9 @@ function StaffOrders() {
                 //     Poi "stato" (shorthand per stato: stato) sovrascrive solo il campo stato.
                 //   - altrimenti → restituisce o invariato (l'ordine non cambia).
                 setOrdini((prev) => prev.map((o) => o._id === ordineId ? { ...o, stato } : o));
-
-                // --- Set: struttura dati per valori unici ---
-                // new Set([...prev, ordineId]):
-                //   - ...prev: l'operatore spread "espande" il Set in un array (es. ['id1', 'id2'])
-                //   - aggiunge ordineId alla fine dell'array
-                //   - new Set(...) ricrea un Set da quell'array — duplicati verrebbero ignorati
-                // Bisogna creare un NUOVO Set (non modificare quello esistente)
-                // per lo stesso motivo dell'immutabilità: React deve ricevere un valore nuovo.
-                // L'ID aggiunto qui farà scattare l'animazione CSS opacity 0 su quella card.
-                setInUscita((prev) => new Set([...prev, ordineId]));
-
-                // Dopo TEMPO_USCITA_ORDINE ms (= durata dell'animazione CSS):
-                // La arrow function () => { ... } è il callback di setTimeout:
-                // verrà chiamata automaticamente dal browser dopo 260ms.
-                //
-                // Dentro, due aggiornamenti:
-                //   1. Rimuove l'id da inUscita:
-                //      (prev) => { const s = new Set(prev); s.delete(ordineId); return s; }
-                //      Creiamo una copia del Set (new Set(prev)), poi .delete() rimuove l'id,
-                //      poi return s restituisce la copia modificata — sempre immutabilità.
-                //   2. Rimuove l'ordine dall'array:
-                //      (prev) => prev.filter((o) => o._id !== ordineId)
-                //      .filter restituisce un nuovo array escludendo l'ordine con quell'id.
-                setTimeout(() => {
-                    setInUscita((prev) => { const s = new Set(prev); s.delete(ordineId); return s; });
-                    setOrdini((prev) => prev.filter((o) => o._id !== ordineId));
-                }, TEMPO_USCITA_ORDINE);
+                // avviaUscita gestisce Set inUscita + setTimeout di rimozione.
+                // Stessa funzione usata dal socket, così la logica non è duplicata.
+                avviaUscita(ordineId);
             } else {
                 // Per In preparazione ↔ Pronto: stesso pattern .map() spiegato sopra.
                 // Nessuna animazione, nessun setTimeout — solo aggiornamento del campo stato.
@@ -158,19 +134,47 @@ function StaffOrders() {
         }
     }
 
+    // Logica di uscita estratta: usata sia da cambiaStato (click staff) che dal socket
+    // (un altro membro dello staff ha cambiato stato). Così la animazione funziona in entrambi i casi.
+    function avviaUscita(ordineId) {
+        setInUscita((prev) => {
+            if (prev.has(ordineId)) return prev; // animazione già in corso, non duplicare
+            const next = new Set([...prev, ordineId]);
+            setTimeout(() => {
+                setInUscita((p) => { const s = new Set(p); s.delete(ordineId); return s; });
+                setOrdini((p) => p.filter((o) => o._id !== ordineId));
+            }, TEMPO_USCITA_ORDINE);
+            return next;
+        });
+    }
+
     // useEffect esegue il codice al primo render (array di dipendenze [] vuoto = esegue solo una volta).
     // La funzione restituita è la "cleanup function": React la chiama quando il componente
     // si smonta (es. l'utente cambia pagina). Qui disconnette il socket Socket.IO.
-    //
-    // () => caricaOrdini() è una arrow function wrapper necessaria: se passassimo caricaOrdini
-    // direttamente, Socket.IO passerebbe i dati dell'evento come primo argomento, che verrebbe
-    // interpretato come mostraLoading=true causando il flash dello spinner.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         caricaOrdini(true);
         const token = getAccessToken();
         if (!token) return;
-        return collegaRealtimeOrdini(token, () => caricaOrdini());
+
+        // 'updated': aggiornamento mirato su un solo ordine — nessun fetch, nessun re-render globale.
+        //   Se stato = Consegnato → animazione di uscita, poi rimozione.
+        //   Altrimenti → solo il campo stato cambia.
+        //   Early return (return prev) se l'ordine non esiste o ha già quello stato:
+        //   React non vede nessun cambiamento di stato e non ri-renderizza nulla.
+        // 'created': nuovo ordine arrivato — dobbiamo fetchare per avere tutti i dati completi.
+        return collegaRealtimeOrdini(token, (tipo, data) => {
+            if (tipo === 'updated') {
+                setOrdini((prev) => {
+                    const existing = prev.find((o) => o._id === data.orderId);
+                    if (!existing || existing.stato === data.stato) return prev;
+                    return prev.map((o) => o._id === data.orderId ? { ...o, stato: data.stato } : o);
+                });
+                if (data.stato === 'Consegnato') avviaUscita(data.orderId);
+            } else {
+                caricaOrdini();
+            }
+        });
     }, []);
 
     // Dati derivati: ricalcolati automaticamente ad ogni render da ordini.
