@@ -82,7 +82,7 @@ async function updateOrderStatus(req, res) {
     const ordine = await Ordine.findOneAndUpdate(
       { _id: req.params.id, idUtente: req.userId },
       { stato },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
 
     if (!ordine) {
@@ -125,7 +125,7 @@ async function updateAnyOrderStatus(req, res) {
     const ordine = await Ordine.findByIdAndUpdate(
       req.params.id,
       { stato },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
 
     if (!ordine) {

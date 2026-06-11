@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Grid, Box, Typography, Card, CardContent, Button } from '@mui/material';
 import { useCart } from './CartContext';
+
+// Lista statica dei prodotti del menu. In una versione più avanzata questi dati
+// potrebbero arrivare da un'API, ma qui sono hardcoded per semplicità.
 const prodottiMenu = [
     {
         id: 1,
@@ -236,21 +239,29 @@ const prodottiMenu = [
     },
 ];
 
-
 const categorie = ['Burger', 'Panini speciali', 'Bevande', 'Fritti', 'Salse', 'Dolci'];
 
 function Menu() {
     const [prodottiMenuFiltered, setProdottiMenuFiltered] = useState([]);
     const [categoriaSelezionata, setCategoriaSelezionata] = useState('Burger');
+
+    // addItem e decreaseItem modificano il carrello globale (CartContext).
+    // getQuantity legge quante unità di un prodotto sono già nel carrello,
+    // usata per mostrare il numero tra i pulsanti + e −.
     const { addItem, decreaseItem, getQuantity } = useCart();
 
+    // Ogni volta che l'utente clicca una categoria, filtra i prodotti
+    // e aggiorna la lista visualizzata. toLowerCase() rende il confronto
+    // case-insensitive (es. "Panini speciali" === "panini speciali").
     useEffect(() => {
-        setProdottiMenuFiltered(prodottiMenu.filter(prodotto => prodotto.categoria.toLowerCase() === categoriaSelezionata.toLowerCase()));
+        setProdottiMenuFiltered(
+            prodottiMenu.filter((prodotto) =>
+                prodotto.categoria.toLowerCase() === categoriaSelezionata.toLowerCase()
+            )
+        );
     }, [categoriaSelezionata]);
 
-
     return (
-
         <Box sx={{
             width: '100%',
             minHeight: '100vh',
@@ -260,70 +271,59 @@ function Menu() {
             position: 'relative',
             overflow: 'hidden',
             boxSizing: 'border-box',
-
         }}>
+            {/* Pulsanti filtro categoria */}
             <Box sx={{
                 display: { xs: 'grid', md: 'flex' },
                 gap: 2,
-                gridTemplateColumns: {
-                    xs: 'repeat(3, 1fr)',
-                    sm: 'repeat(3, 1fr)',
-                },
+                gridTemplateColumns: { xs: 'repeat(3, 1fr)', sm: 'repeat(3, 1fr)' },
             }}>
-                {
-                    categorie.map((categoria) => (
-                        <Button variant="outlined"
-                            onClick={() => {
-                                setCategoriaSelezionata(categoria)
-                            }}
-                            sx={{
-                                width: '100%',
-                                minHeight: { xs: '52px', sm: '50px' },
-                                fontWeight: 'bold',
+                {categorie.map((categoria) => (
+                    <Button
+                        key={categoria}
+                        variant="outlined"
+                        onClick={() => setCategoriaSelezionata(categoria)}
+                        sx={{
+                            width: '100%',
+                            minHeight: { xs: '52px', sm: '50px' },
+                            fontWeight: 'bold',
+                            color: categoriaSelezionata === categoria ? '#ffffff' : '#ff8400',
+                            borderColor: '#ff8400',
+                            border: '0px',
+                            borderRadius: { xs: '30px', md: '300px' },
+                            backgroundColor: categoriaSelezionata === categoria ? '#ff8400' : 'transparent',
+                            px: 4,
+                            py: 1.5,
+                            fontSize: { xs: '12px', sm: '12px', md: '15px' },
+                            '&:hover': {
+                                backgroundColor: categoriaSelezionata === categoria ? '#ff8400' : '#6e441f',
                                 color: categoriaSelezionata === categoria ? '#ffffff' : '#ff8400',
-                                borderColor: '#ff8400',
-                                border: '0px',
-                                borderRadius: { xs: '30px', md: '300px' },
-                                backgroundColor: categoriaSelezionata === categoria ? '#ff8400' : 'transparent',
-                                px: 4,
-                                py: 1.5,
-                                fontSize: { xs: '12px', sm: '12px', md: '15px' },
-                                '&:hover': {
-                                    backgroundColor: categoriaSelezionata === categoria ? '#ff8400' : '#6e441f',
-                                    color: categoriaSelezionata === categoria ? '#ffffff' : '#ff8400',
-                                    boxShadow: '0 12px 40px rgba(255,132,0,0.2)',
-                                },
-                            }}>
-                            {categoria}
-                        </Button>
-                    ))
-                }
+                                boxShadow: '0 12px 40px rgba(255,132,0,0.2)',
+                            },
+                        }}
+                    >
+                        {categoria}
+                    </Button>
+                ))}
             </Box>
-            <Grid container spacing={3}
-                sx={{
-                    display: 'flex',
-                    width: '100%',
-                    gap: 2,
-                    overflowX: 'auto',
-                    scrollBehavior: 'smooth',
-                    px: { xs: 0, md: 0 },
-                    mx: { xs: 0, md: 0 },
-                    pb: 2,
-                    pt: 6,
-                    scrollbarWidth: 'none',
-                    '&::-webkit-scrollbar': {
-                        display: 'none'
-                    }
 
-
-                }}>
-
-
-
-
+            {/* Griglia prodotti con scroll orizzontale su mobile */}
+            <Grid container spacing={3} sx={{
+                display: 'flex',
+                width: '100%',
+                gap: 2,
+                overflowX: 'auto',
+                scrollBehavior: 'smooth',
+                px: { xs: 0, md: 0 },
+                mx: { xs: 0, md: 0 },
+                pb: 2,
+                pt: 6,
+                scrollbarWidth: 'none',
+                '&::-webkit-scrollbar': { display: 'none' },
+            }}>
                 {prodottiMenuFiltered.map((prodotto) => (
                     <Grid item xs={12} md={2} key={prodotto.id}>
-                        <Card key={prodotto.categoria} sx={{
+                        <Card sx={{
                             backgroundColor: '#2a2a2a',
                             borderRadius: '20px',
                             border: '1px solid rgba(255,255,255,0.06)',
@@ -340,78 +340,40 @@ function Menu() {
                                 boxShadow: '0 12px 40px rgba(255,132,0,0.2)',
                             },
                         }}>
-                            <Box
-                                component="img"
-                                src={prodotto.img}
-                                alt={prodotto.nome}
-                                sx={{
-                                    width: '100%',
-                                    height: '165px',
-                                    objectFit: 'cover',
-                                    display: 'block',
-                                }}
+                            <Box component="img" src={prodotto.img} alt={prodotto.nome}
+                                sx={{ width: '100%', height: '165px', objectFit: 'cover', display: 'block' }}
                             />
 
                             <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                                 <Typography sx={{ color: '#ff8400', fontSize: '11px', fontWeight: 'bold', letterSpacing: 2, mb: 1 }}>
                                     {prodotto.categoria.toUpperCase()}
                                 </Typography>
-
                                 <Typography sx={{ color: '#ffffff', fontWeight: 'bold', fontSize: '16px', mb: 1 }}>
                                     {prodotto.nome}
                                 </Typography>
-
                                 <Typography sx={{ height: '44px', color: 'rgba(255,255,255,0.5)', fontSize: '13px', mb: 2 }}>
                                     {prodotto.desc}
                                 </Typography>
-
                                 <Typography sx={{ color: '#ff8400', fontWeight: 900, fontSize: '20px' }}>
                                     {prodotto.prezzo.toFixed(2).replace('.', ',')} EUR
                                 </Typography>
-                                <Box sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    gap: 3,
-                                    mt: 2,
-                                }}></Box>
-                                <Box sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    gap: 3,
 
-                                }}>
-                                    <Button onClick={() =>
-                                        decreaseItem(prodotto.id)
-                                    } sx={{
-                                        backgroundColor: '#1a1a1a',
-                                        fontWeight: 900,
-                                        fontSize: '30px',
-                                        color: '#ff8400',
-                                        borderRadius: '10px',
-                                        p: 0,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
+                                {/* Controlli quantità: − numero + */}
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, mt: 2 }}>
+                                    <Button onClick={() => decreaseItem(prodotto.id)} sx={{
+                                        backgroundColor: '#1a1a1a', fontWeight: 900, fontSize: '30px',
+                                        color: '#ff8400', borderRadius: '10px', p: 0,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     }}>
                                         −
                                     </Button>
                                     <Typography sx={{ color: '#ffffff', fontWeight: 900, fontSize: '25px' }}>
                                         {getQuantity(prodotto.id)}
                                     </Typography>
-                                    <Button onClick={() =>
-                                            addItem(prodotto)
-                                    } sx={{
-                                        backgroundColor: '#1a1a1a',
-                                        fontWeight: 900,
-                                        fontSize: '30px',
-                                        color: '#ff8400',
-                                        borderRadius: '10px',
-                                        display: 'flex',
-                                        p:0,
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
+                                    <Button onClick={() => addItem(prodotto)} sx={{
+                                        backgroundColor: '#1a1a1a', fontWeight: 900, fontSize: '30px',
+                                        color: '#ff8400', borderRadius: '10px', p: 0,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     }}>
                                         +
                                     </Button>
@@ -420,9 +382,8 @@ function Menu() {
                         </Card>
                     </Grid>
                 ))}
-
             </Grid>
-        </Box >
+        </Box>
     );
 }
 

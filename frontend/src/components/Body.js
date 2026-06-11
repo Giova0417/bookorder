@@ -29,7 +29,7 @@ function Body() {
       }}>
 
         {/* Badge */}
-        <Box sx={{
+        <Typography sx={{
           display: 'inline-block',
           backgroundColor: '#ff8400',
           color: 'white',
@@ -41,7 +41,7 @@ function Body() {
           letterSpacing: '1.5px',
         }}>
            NOVITÀ DEL MESE
-        </Box>
+        </Typography>
 
         <Typography sx={{
           fontFamily: '"Arial Black", Impact, sans-serif',
@@ -69,7 +69,6 @@ function Body() {
           in un morbido panino. Riserva il tuo tavolo!
         </Typography>
 
-        <Box  sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           <Button component={Link} to='/menu' variant="contained" color="warning" sx={{
             height: '52px',
             px: 4,
@@ -85,7 +84,6 @@ function Body() {
           }}>
             ORDINA ORA
           </Button>
-        </Box>
       </Box>
 
       {/* BURGER */}
