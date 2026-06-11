@@ -17,7 +17,8 @@ const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
 
 function statoSx(stato) {
     if (stato === 'In preparazione') return { backgroundColor: '#ff8400', color: '#111' };
-    if (stato === 'Pronto' || stato === 'Consegnato' || stato === 'Completato') return { backgroundColor: '#2e7d32', color: '#fff' };
+    if (stato === 'Pronto') return { backgroundColor: '#2e7d32', color: '#fff' };
+    if (stato === 'Consegnato' || stato === 'Completato') return { backgroundColor: '#6a1b9a', color: '#fff' };
     return { backgroundColor: '#333', color: '#fff' };
 }
 

@@ -55,7 +55,8 @@ function totaleOrdine(ordine) {
 function statoSx(stato) {
     if (stato === 'In preparazione') return { backgroundColor: '#ff8400', color: '#111' };
     if (stato === 'Pronto') return { backgroundColor: '#1976d2', color: '#fff' };
-    return { backgroundColor: '#2e7d32', color: '#fff' };
+    if (stato === 'Consegnato') return { backgroundColor: '#6a1b9a', color: '#fff' };
+    return { backgroundColor: '#333', color: '#fff' };
 }
 
 // StaffOrders è un componente React: una funzione JavaScript che restituisce JSX.
