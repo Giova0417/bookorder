@@ -7,30 +7,28 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from './CartContext';
 import { clearAccessToken, getAccessToken } from '../api/client';
 import { caricaUtenteCorrente, logoutUtente } from '../api/auth';
+import { calcolaTotale, formatPrice } from '../utils';
 
 function Navbar() {
     const { cartItems, totalQuantity } = useCart();
     const [utente, setUtente] = useState(null);
     const location = useLocation();
-    const [cartOpen, setCartOpen] = useState(false);
     const [cartAnchor, setCartAnchor] = useState(null);
     const navigate = useNavigate();
 
     // Apre il popover del carrello ancorandolo al bottone cliccato.
     // event.currentTarget è l'elemento DOM del bottone, usato da Popover per sapere dove posizionarsi.
-    const handleCartClick = (event) => {
+    function handleCartClick(event) {
         setCartAnchor(event.currentTarget);
-        setCartOpen(true);
-    };
+    }
 
-    const handleCartClose = () => {
-        setCartOpen(false);
+    function handleCartClose() {
         setCartAnchor(null);
-    };
+    }
 
     // Verifica se l'utente ha una sessione attiva chiamando /api/auth/me.
     // Se il token è assente o scaduto (e il refresh fallisce), imposta utente a null.
-    const VerifySession = async () => {
+    async function verificaSessione() {
         const token = getAccessToken();
         if (!token) {
             setUtente(null);
@@ -43,20 +41,20 @@ function Navbar() {
             clearAccessToken();
             setUtente(null);
         }
-    };
+    }
 
-    // Riesegue VerifySession ogni volta che l'utente cambia pagina (location.pathname).
+    // Riesegue verificaSessione ogni volta che l'utente cambia pagina (location.pathname).
     // Questo mantiene la navbar sincronizzata: se il token scade durante la navigazione,
     // la navbar si aggiorna mostrando il pulsante di login invece del nome utente.
-    useEffect(() => {
-        VerifySession();
+    useEffect(function aggiornaSessioneNavbar() {
+        verificaSessione();
     }, [location.pathname]);
 
     // Chiama il server per invalidare il refresh token (cookie HttpOnly),
     // poi pulisce il token locale e reindirizza alla home.
     // Il try/catch gestisce il caso in cui il server sia irraggiungibile:
     // clearAccessToken() viene chiamato comunque per sloggare l'utente localmente.
-    const handleLogout = async () => {
+    async function handleLogout() {
         try {
             await logoutUtente();
         } catch (errore) {
@@ -66,14 +64,19 @@ function Navbar() {
 
         navigate('/');
         setUtente(null);
-    };
+    }
 
-    const subtotal = cartItems.reduce((sum, item) => sum + item.prezzo * item.quantita, 0);
-    const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
+    const subtotal = calcolaTotale(cartItems);
 
-    // isStaff determina quali elementi mostrare nella navbar:
-    // lo staff vede solo il bottone "Staff", i clienti vedono carrello e ordini.
-    const isStaff = utente?.role === 'staff';
+    // isStaff determina quali elementi mostrare nella navbar.
+    // Se l'utente non esiste, isStaff resta false.
+    let isStaff = false;
+
+    if (utente && utente.role === 'staff') {
+        isStaff = true;
+    }
+
+    const cartOpen = Boolean(cartAnchor);
 
     return (
         <AppBar position="fixed" color="warning" sx={{ maxWidth: '100%', background: 'linear-gradient(135deg, #000000 0%, #1c1816 50%, #000000 100%)' }}>
@@ -92,19 +95,19 @@ function Navbar() {
                     Book&Order
                 </Typography>
 
-                {utente?.role === 'staff' && (
+                {isStaff && (
                     <Button color="inherit" component={Link} to="/staff" sx={{ fontWeight: 900 }}>
                         Staff
                     </Button>
                 )}
 
-                {utente?.role !== 'staff' && (
+                {!isStaff && (
                     <IconButton color="inherit" size="large" component={Link} to="/ordini">
                         <ReceiptLongIcon />
                     </IconButton>
                 )}
 
-                {utente?.role !== 'staff' && (
+                {!isStaff && (
                     <IconButton color="inherit" size="large" onClick={handleCartClick}>
                         {/* Badge mostra il numero di articoli nel carrello sopra l'icona */}
                         <Badge

@@ -1,95 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import {
-    Alert,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    CircularProgress,
-    Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { getAccessToken } from '../api/client';
 import { caricaOrdiniCliente } from '../api/orders';
 import { collegaRealtimeOrdini } from '../api/realtime';
-
-const formatPrice = (price) => `${price.toFixed(2).replace('.', ',')} EUR`;
-
-function statoSx(stato) {
-    if (stato === 'In preparazione') return { backgroundColor: '#ff8400', color: '#111' };
-    if (stato === 'Pronto') return { backgroundColor: '#2e7d32', color: '#fff' };
-    if (stato === 'Consegnato' || stato === 'Completato') return { backgroundColor: '#6a1b9a', color: '#fff' };
-    return { backgroundColor: '#333', color: '#fff' };
-}
-
-function totaleOrdine(ordine) {
-    return ordine.cartItems.reduce((sum, item) => sum + item.prezzo * item.quantita, 0);
-}
-
-// React.memo "memorizza" il componente: OrdineCard viene ri-renderizzata SOLO se
-// le sue props cambiano. Senza memo, ogni aggiornamento di stato in Ordini (il genitore)
-// causerebbe il ri-render di TUTTE le card, anche quelle non cambiate.
-// Con memo: se arriva un orderUpdated per l'ordine #3, solo quella card si aggiorna.
-//
-// React.memo fa un confronto superficiale (shallow): per ogni prop controlla
-// se il riferimento è cambiato. Ecco perché passiamo ordine dall'array originale
-// (non da ordiniConNumero che crea nuovi oggetti) e numeroOrdine come numero separato.
-const OrdineCard = React.memo(function OrdineCard({ ordine, numeroOrdine }) {
-    return (
-        <Card sx={{ backgroundColor: '#242424', borderRadius: '18px', border: '1px solid rgba(255,132,0,0.24)' }}>
-            <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-                    <Box>
-                        <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: '20px' }}>
-                            Ordine #{numeroOrdine}
-                        </Typography>
-                        <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', mt: 0.5 }}>
-                            {ordine.cartItems.length} {ordine.cartItems.length === 1 ? 'prodotto' : 'prodotti'}
-                        </Typography>
-                    </Box>
-                    <Typography sx={{ ...statoSx(ordine.stato), fontWeight: 900, fontSize: '13px', borderRadius: '8px', px: 1.5, py: 0.5 }}>
-                        {ordine.stato}
-                    </Typography>
-                </Box>
-
-                <Box sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)', my: 2 }} />
-
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.3 }}>
-                    {ordine.cartItems.map((item) => (
-                        <Box key={`${ordine._id}-${item.id}`} sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 2, alignItems: 'center' }}>
-                            <Box sx={{ minWidth: 0 }}>
-                                <Typography sx={{ color: '#fff', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {item.nome}
-                                </Typography>
-                                <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px' }}>
-                                    {item.quantita} x {formatPrice(item.prezzo)}
-                                </Typography>
-                            </Box>
-                            <Typography sx={{ color: '#ff8400', fontWeight: 900 }}>
-                                {formatPrice(item.prezzo * item.quantita)}
-                            </Typography>
-                        </Box>
-                    ))}
-                </Box>
-
-                <Box sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)', my: 2 }} />
-
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography sx={{ color: '#fff', fontWeight: 900 }}>Totale</Typography>
-                    <Typography sx={{ color: '#ff8400', fontWeight: 900, fontSize: '20px' }}>
-                        {formatPrice(totaleOrdine(ordine))}
-                    </Typography>
-                </Box>
-            </CardContent>
-        </Card>
-    );
-});
+import OrdineCard from './OrdineCard';
+import { copiaOrdineConNuovoStato, formatPrice, totaleOrdine } from '../utils';
 
 function Ordini() {
+    // ordini: array degli ordini del cliente, caricato dal backend.
+    // errore: messaggio da mostrare in caso di problema.
+    // loading: true solo durante il primo caricamento, serve per il CircularProgress.
     const [ordini, setOrdini] = useState([]);
     const [errore, setErrore] = useState('');
     const [loading, setLoading] = useState(true);
 
+    // caricaOrdini recupera gli ordini dal server.
+    // mostraLoading=true viene passato solo al primo caricamento:
+    // negli aggiornamenti real-time successivi non vogliamo far sparire le card.
     async function caricaOrdini(mostraLoading = false) {
         if (!getAccessToken()) {
             setErrore('Devi effettuare il login per vedere i tuoi ordini');
@@ -97,7 +25,9 @@ function Ordini() {
             if (mostraLoading) setLoading(false);
             return;
         }
+
         if (mostraLoading) setLoading(true);
+
         try {
             const lista = await caricaOrdiniCliente();
             setErrore('');
@@ -109,35 +39,57 @@ function Ordini() {
         }
     }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => {
+    // Aggiorna un singolo ordine nella lista locale senza ricaricare tutto dal server.
+    // Usiamo la versione funzionale di setOrdini (con callback) per lavorare sempre
+    // sull'array più aggiornato, evitando il problema del "stale closure".
+    function aggiornaOrdineLocale(ordineId, nuovoStato) {
+        setOrdini(function aggiornaLista(listaCorrente) {
+            return listaCorrente.map(function aggiornaOrdine(ordine) {
+                if (ordine._id === ordineId) {
+                    return copiaOrdineConNuovoStato(ordine, nuovoStato);
+                }
+                return ordine;
+            });
+        });
+    }
+
+    // useEffect viene eseguito una sola volta al montaggio del componente ([] come dipendenza).
+    // Carica gli ordini iniziali e apre la connessione Socket.IO.
+    // La funzione di cleanup (return) viene chiamata da React quando il componente
+    // viene smontato (es. l'utente cambia pagina): chiude il socket per evitare
+    // connessioni duplicate o memory leak.
+    useEffect(function avviaPaginaOrdini() {
         caricaOrdini(true);
+
         const token = getAccessToken();
         if (!token) return;
 
-        // Il callback riceve (tipo, data) da realtime.js.
-        // 'updated': il backend manda { orderId, stato } — abbiamo tutto per aggiornare
-        //            localmente senza toccare la rete. Solo la card di quell'ordine si aggiorna.
-        // 'created': è arrivato un nuovo ordine, non abbiamo i suoi dati → fetch completo.
-        return collegaRealtimeOrdini(token, (tipo, data) => {
+        // gestisciEventoRealtime viene chiamata dal socket ogni volta che arriva un evento.
+        // Se l'ordine è già nella lista lo aggiorniamo localmente (più veloce),
+        // altrimenti ricarichiamo tutto (es. nuovo ordine creato).
+        function gestisciEventoRealtime(tipo, data) {
             if (tipo === 'updated') {
-                setOrdini((prev) => {
-                    const existing = prev.find((o) => o._id === data.orderId);
-                    // Early return: se lo stato è già aggiornato o l'ordine non esiste,
-                    // restituiamo prev invariato → React non vede nessun cambio → nessun re-render.
-                    if (!existing || existing.stato === data.stato) return prev;
-                    return prev.map((o) => o._id === data.orderId ? { ...o, stato: data.stato } : o);
-                });
+                aggiornaOrdineLocale(data.orderId, data.stato);
             } else {
                 caricaOrdini();
             }
-        });
+        }
+
+        // collegaRealtimeOrdini restituisce la funzione di disconnessione:
+        // React la chiama automaticamente quando il componente viene smontato.
+        return collegaRealtimeOrdini(token, gestisciEventoRealtime);
     }, []);
 
-    // ordiniConNumero serve solo al pannello sinistro per mostrare "Ordine #N".
-    // Non viene passato a OrdineCard (userebbe nuovi riferimenti rompendo React.memo).
-    const ordiniConNumero = ordini.map((o, i) => ({ ...o, numeroOrdine: ordini.length - i }));
-    const ordiniInPreparazione = ordiniConNumero.filter((o) => o.stato === 'In preparazione');
+    // Aggiungiamo a ogni ordine un numero progressivo (1, 2, 3...) calcolato
+    // dalla posizione nell'array. Gli ordini arrivano dal più recente, quindi
+    // l'ordine più recente ha il numero più alto.
+    const ordiniConNumero = ordini.map(function aggiungiNumeroOrdine(ordine, index) {
+        return { ...ordine, numeroOrdine: ordini.length - index };
+    });
+
+    const ordiniInPreparazione = ordiniConNumero.filter(function soloInPreparazione(o) {
+        return o.stato === 'In preparazione';
+    });
 
     return (
         <Box sx={{
@@ -167,12 +119,16 @@ function Ordini() {
                     </Button>
                 )}
 
+                {/* Rendering condizionale: spinner durante il caricamento iniziale,
+                    contenuto reale quando i dati sono pronti. */}
                 {loading && ordini.length === 0 ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
                         <CircularProgress sx={{ color: '#ff8400' }} />
                     </Box>
                 ) : (!errore || ordini.length > 0) && (
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '340px minmax(0, 1fr)' }, gap: 3, alignItems: 'start' }}>
+
+                        {/* Pannello laterale: riepilogo ordini in preparazione */}
                         <Card sx={{ backgroundColor: '#242424', borderRadius: '18px', border: '1px solid rgba(255,132,0,0.24)' }}>
                             <CardContent sx={{ p: 3 }}>
                                 <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: '24px', mb: 2 }}>
@@ -195,6 +151,8 @@ function Ordini() {
                             </CardContent>
                         </Card>
 
+                        {/* Lista ordini: OrdineCard riceve l'ordine e il numero ma NON onCambiaStato,
+                            quindi mostra la vista cliente (senza bottoni stato). */}
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                             {ordini.length === 0 ? (
                                 <Card sx={{ backgroundColor: '#242424', borderRadius: '18px', border: '1px solid rgba(255,132,0,0.24)' }}>
@@ -211,14 +169,11 @@ function Ordini() {
                                     </CardContent>
                                 </Card>
                             ) : (
-                                // Passiamo ordine dall'array originale (riferimento stabile)
-                                // e numeroOrdine come numero separato — così React.memo
-                                // confronta correttamente e ri-renderizza solo la card cambiata.
-                                ordini.map((ordine, index) => (
+                                ordiniConNumero.map((ordine) => (
                                     <OrdineCard
                                         key={ordine._id}
                                         ordine={ordine}
-                                        numeroOrdine={ordini.length - index}
+                                        numeroOrdine={ordine.numeroOrdine}
                                     />
                                 ))
                             )}

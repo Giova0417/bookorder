@@ -1,46 +1,34 @@
-// client.js è la fondazione del layer API: gestisce il token JWT in localStorage,
-// costruisce gli header Authorization per ogni richiesta,
-// e implementa il silent refresh — se una richiesta riceve 401 (token scaduto),
-// rinnova automaticamente il token e riprova la richiesta senza che l'utente se ne accorga.
+// Indirizzo base del backend.
+// In produzione usa la variabile d'ambiente impostata su Vercel,
+// in sviluppo locale usa il default localhost:5000.
 export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const ACCESS_TOKEN_STORAGE_KEY = 'token';
 
-// Tre funzioni che incapsulano localStorage.
-// localStorage è una Browser Web API che permette di salvare dati persistenti nel browser.
-// Il if (token) in saveAccessToken è una guardia: evita di salvare undefined se il server risponde senza token.
-// L'access token sta in localStorage (non in un cookie) perché dura solo 15 minuti.
-// Il refresh token invece — più pericoloso perché dura 7 giorni — sta in un cookie HttpOnly,
-// inaccessibile a JavaScript, quindi al sicuro da attacchi XSS.
+// L'access token viene salvato in localStorage: persiste anche dopo la chiusura del browser.
+// Non usiamo sessionStorage perché vogliamo che l'utente resti loggato tra una sessione e l'altra.
 export function getAccessToken() {
     return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
 }
 
 export function saveAccessToken(token) {
-    if (token) {
-        localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
-    }
+    if (token) localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
 }
 
 export function clearAccessToken() {
     localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
 }
 
-// risposta.json() parsa il body HTTP come JSON.
-// Il .catch(() => ({})) è una protezione: se il server risponde con un body vuoto o non-JSON
-// (per esempio un 500 generico senza corpo), risposta.json() lancerebbe un errore.
-// Il catch restituisce un oggetto vuoto, permettendo al codice successivo di gestire l'errore con risposta.ok.
-// Nota: fetch non rigetta la Promise per errori HTTP — rigetta solo per errori di rete.
-// Quindi un 500 dal server non va nel catch — arriva con risposta.ok = false.
+// Prova a leggere il JSON della risposta HTTP.
+// Se il server manda una risposta vuota (es. 204 No Content), .json() lancia un errore:
+// il catch lo intercetta e restituisce un oggetto vuoto per non far crashare il frontend.
 export async function readJson(risposta) {
-    return risposta.json().catch(() => ({}));
+    return risposta.json().catch(function() { return {}; });
 }
 
-// Chiama /api/auth/refresh con credentials: 'include' — il browser allega automaticamente il cookie con il refresh token.
-// Il server verifica il refresh token, lo revoca, ne crea uno nuovo, e risponde con un nuovo access token.
-// Se il refresh fallisce (token scaduto, revocato, utente cancellato) cancella il token locale e restituisce null.
-// IMPORTANTE: usa fetch diretto e non apiFetch per evitare un loop infinito:
-// apiFetch → 401 → refreshAccessToken → apiFetch → 401 → loop infinito.
+// Chiede al backend un nuovo access token usando il refresh token nel cookie.
+// Il browser manda il cookie automaticamente grazie a credentials: 'include'.
+// Il backend verifica il cookie, revoca il vecchio refresh token ed emette un nuovo paio.
 export async function refreshAccessToken() {
     const risposta = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
         method: 'POST',
@@ -53,23 +41,29 @@ export async function refreshAccessToken() {
     }
 
     const dati = await readJson(risposta);
+
     if (dati.accessToken) {
         saveAccessToken(dati.accessToken);
+        return dati.accessToken;
     }
-    return dati.accessToken || null;
+
+    return null;
 }
 
-// Aggiunge gli header necessari a ogni richiesta:
-// - Content-Type: application/json — solo se c'è un body, altrimenti express.json() non parserebbe req.body
-// - Authorization: Bearer <token> — il JWT viene inviato nell'header con il prefisso Bearer.
-//   Il middleware requireAuth lato backend legge questo header e verifica il token con jwt.verify.
 function buildHeaders(options, token) {
-    const headers = { ...(options.headers || {}) };
+    const headers = {};
+
+    if (options.headers) {
+        for (const nomeHeader in options.headers) {
+            headers[nomeHeader] = options.headers[nomeHeader];
+        }
+    }
 
     if (options.body && !headers['Content-Type']) {
         headers['Content-Type'] = 'application/json';
     }
 
+    // Il backend si aspetta il token nell'header Authorization: Bearer <token>
     if (token) {
         headers.Authorization = `Bearer ${token}`;
     }
@@ -77,35 +71,38 @@ function buildHeaders(options, token) {
     return headers;
 }
 
-// La funzione più importante del layer API. Implementa il silent refresh in tre passi:
-// 1. Prima fetch: fa la richiesta con il token corrente.
-//    Se la risposta non è 401, la restituisce direttamente (qualsiasi risposta, 200 o 500, passa senza interferenze).
-// 2. Se è 401: il token è scaduto. Chiama refreshAccessToken con il cookie.
-//    Se il refresh fallisce (nuovoToken è null), restituisce la risposta 401 originale.
-// 3. Seconda fetch: se il refresh è andato bene, ripete la richiesta con il nuovo token.
-//    L'utente non si accorge di nulla — la sua azione va a buon fine come se il token non fosse mai scaduto.
+function buildRequestOptions(options, token) {
+    const requestOptions = {
+        method: options.method || 'GET',
+        credentials: 'include',
+        headers: buildHeaders(options, token),
+    };
+
+    if (options.body) requestOptions.body = options.body;
+
+    return requestOptions;
+}
+
+// apiFetch è il nostro "fetch intelligente":
+// 1. Prova la richiesta con il token corrente.
+// 2. Se il server risponde 401 (token scaduto), prova a rinnovarlo automaticamente.
+// 3. Se il rinnovo riesce, ripete la richiesta originale con il nuovo token.
+// 4. Se il rinnovo fallisce, restituisce il 401 originale (l'utente dovrà fare login).
+// In questo modo l'utente non si accorge mai della scadenza del token.
 export async function apiFetch(path, options = {}) {
     const url = `${API_BASE_URL}${path}`;
 
-    const risposta = await fetch(url, {
-        ...options,
-        headers: buildHeaders(options, getAccessToken()),
-        credentials: 'include',
-    });
+    const primaRisposta = await fetch(url, buildRequestOptions(options, getAccessToken()));
 
-    if (risposta.status !== 401) {
-        return risposta;
+    if (primaRisposta.status !== 401) {
+        return primaRisposta;
     }
 
     const nuovoToken = await refreshAccessToken();
 
     if (!nuovoToken) {
-        return risposta;
+        return primaRisposta;
     }
 
-    return fetch(url, {
-        ...options,
-        headers: buildHeaders(options, nuovoToken),
-        credentials: 'include',
-    });
+    return fetch(url, buildRequestOptions(options, nuovoToken));
 }

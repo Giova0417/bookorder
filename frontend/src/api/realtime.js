@@ -1,40 +1,42 @@
 import { io } from 'socket.io-client';
 import { API_BASE_URL, refreshAccessToken } from './client';
 
-// Apre una connessione Socket.IO con il backend e chiama onOrderChange ogni volta
-// che il server emette un evento orderCreated o orderUpdated.
-// Restituisce una funzione di cleanup da chiamare quando il componente si smonta.
+// Apre una connessione Socket.IO autenticata con il backend.
+// Restituisce una funzione di disconnessione: React la chiama quando il componente
+// viene smontato, evitando connessioni duplicate e memory leak.
+//
+// onOrderChange viene chiamata con (tipo, data) ogni volta che arriva un evento:
+//   tipo = 'created' → nuovo ordine da caricare
+//   tipo = 'updated' → ordine esistente da aggiornare
 export function collegaRealtimeOrdini(token, onOrderChange) {
-    // active serve a evitare che socket.connect() venga chiamato dopo che il componente
-    // si è già smontato (es. l'utente ha cambiato pagina mentre il refresh era in corso).
     let active = true;
 
+    // Il token viene passato nell'oggetto auth: il backend lo legge in authenticateSocket.
     const socket = io(API_BASE_URL, {
         auth: { token },
     });
 
-    // Passiamo il tipo di evento e i dati al callback così il componente
-    // può decidere se fare un aggiornamento locale mirato o un fetch completo.
-    socket.on('orderCreated', (data) => onOrderChange('created', data));
-    socket.on('orderUpdated', (data) => onOrderChange('updated', data));
+    socket.on('orderCreated', function gestisciOrdineCreato(data) {
+        onOrderChange('created', data);
+    });
 
-    // connect_error scatta quando la connessione fallisce — di solito perché il token JWT
-    // passato in auth è scaduto. In quel caso rinnoviamo il token e riproviamo la connessione.
-    socket.on('connect_error', async () => {
+    socket.on('orderUpdated', function gestisciOrdineAggiornato(data) {
+        onOrderChange('updated', data);
+    });
+
+    // connect_error si verifica di solito quando l'access token è scaduto.
+    // Proviamo a rinnovarlo con il refresh token e riconnettiamo il socket.
+    // Il flag "active" evita di riconnettersi se il componente è già stato smontato.
+    socket.on('connect_error', async function gestisciErroreConnessione() {
         const nuovoToken = await refreshAccessToken();
 
-        if (!active || !nuovoToken) {
-            return;
-        }
+        if (!active || !nuovoToken) return;
 
         socket.auth = { token: nuovoToken };
         socket.connect();
     });
 
-    // Questa funzione viene restituita e chiamata da React nel cleanup dell'useEffect,
-    // cioè quando il componente si smonta. Imposta active = false (blocca eventuali
-    // reconnect in corso) e chiude la connessione Socket.IO.
-    return () => {
+    return function scollegaRealtimeOrdini() {
         active = false;
         socket.disconnect();
     };

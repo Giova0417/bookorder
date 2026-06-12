@@ -1,77 +1,94 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 
-// createContext crea un "contenitore globale" che può essere letto da qualsiasi componente
-// nell'albero React senza passare props manualmente attraverso ogni livello.
-// Il valore null è il default usato solo se qualcuno legge il context fuori dal Provider.
+// Context = spazio condiviso.
+// Lo usiamo per far leggere lo stesso carrello a Menu, Navbar e Cart.
 const CartContext = createContext(null);
 
-// CartProvider è il componente che "avvolge" tutta l'app (in App.js) e rende
-// le funzioni del carrello disponibili a ogni componente figlio.
-export function CartProvider({ children }) {
-    // Il carrello è salvato come oggetto { [id]: prodotto } invece di un array.
-    // Questo permette di trovare e aggiornare un prodotto in O(1) tramite il suo id,
-    // senza dover scorrere tutta la lista con find() o filter() ogni volta.
-    const [items, setItems] = useState({});
-
-    // Aggiunge un prodotto o aumenta la sua quantità di 1.
-    // setItems riceve una funzione (prev => ...) invece di un valore diretto:
-    // questo garantisce che lavoriamo sempre sullo stato più aggiornato,
-    // evitando il problema delle "closure stantie" in React.
-    const addItem = (prodotto) => {
-        setItems((prev) => ({
-            ...prev,
-            [prodotto.id]: {
-                ...prodotto,
-                quantita: (prev[prodotto.id]?.quantita || 0) + 1,
-            },
-        }));
+function creaRigaCarrello(prodotto, quantita) {
+    // Copiamo i dati del prodotto e aggiungiamo la quantita scelta.
+    return {
+        ...prodotto,
+        quantita,
     };
+}
 
-    // Riduce la quantità di 1. Se la quantità arriva a 0, rimuove completamente il prodotto.
-    // delete crea una copia dell'oggetto senza quella chiave — non modifica lo stato direttamente
-    // (in React lo stato non va mai mutato, va sempre sostituito con una copia).
-    const decreaseItem = (prodottoId) => {
-        setItems((prev) => {
-            const current = prev[prodottoId];
+function aggiungiProdotto(lista, prodotto) {
+    const prodottoGiaPresente = lista.find(function cercaProdotto(item) {
+        return item.id === prodotto.id;
+    });
 
-            if (!current) return prev;
+    if (!prodottoGiaPresente) {
+        return [...lista, creaRigaCarrello(prodotto, 1)];
+    }
 
-            if (current.quantita <= 1) {
-                const updated = { ...prev };
-                delete updated[prodottoId];
-                return updated;
-            }
+    // map crea un nuovo array.
+    // Cambiamo solo il prodotto cliccato, gli altri restano uguali.
+    return lista.map(function aumentaQuantita(item) {
+        if (item.id === prodotto.id) {
+            return creaRigaCarrello(item, item.quantita + 1);
+        }
 
-            return {
-                ...prev,
-                [prodottoId]: {
-                    ...current,
-                    quantita: current.quantita - 1,
-                },
-            };
+        return item;
+    });
+}
+
+function rimuoviUnaUnita(lista, prodottoId) {
+    const prodottoGiaPresente = lista.find(function cercaProdotto(item) {
+        return item.id === prodottoId;
+    });
+
+    if (!prodottoGiaPresente) {
+        return lista;
+    }
+
+    if (prodottoGiaPresente.quantita === 1) {
+        // filter crea un nuovo array tenendo solo i prodotti diversi da quello rimosso.
+        return lista.filter(function rimuoviProdotto(item) {
+            return item.id !== prodottoId;
         });
-    };
+    }
 
-    // Restituisce la quantità di un prodotto specifico, oppure 0 se non è nel carrello.
-    // Usata nel Menu per mostrare il numero accanto ai pulsanti + e −.
-    const getQuantity = (prodottoId) => {
-        return items[prodottoId]?.quantita || 0;
-    };
+    return lista.map(function diminuisciQuantita(item) {
+        if (item.id === prodottoId) {
+            return creaRigaCarrello(item, item.quantita - 1);
+        }
 
-    // Svuota completamente il carrello dopo che l'ordine è stato confermato.
-    const clearCart = () => {
-        setItems({});
-    };
+        return item;
+    });
+}
 
-    // Object.values converte l'oggetto items in un array di prodotti,
-    // che è più comodo da usare nei componenti con .map().
-    const cartItems = Object.values(items);
+export function CartProvider({ children }) {
+    // cartItems e' l'array dei prodotti scelti dall'utente.
+    const [cartItems, setCartItems] = useState([]);
 
-    // useMemo ricalcola totalQuantity solo quando cartItems cambia,
-    // evitando di sommare tutte le quantità a ogni render del componente.
-    const totalQuantity = useMemo(() => {
-        return cartItems.reduce((sum, item) => sum + item.quantita, 0);
-    }, [cartItems]);
+    function addItem(prodotto) {
+        setCartItems(function aggiornaCarrello(listaCorrente) {
+            return aggiungiProdotto(listaCorrente, prodotto);
+        });
+    }
+
+    function decreaseItem(prodottoId) {
+        setCartItems(function aggiornaCarrello(listaCorrente) {
+            return rimuoviUnaUnita(listaCorrente, prodottoId);
+        });
+    }
+
+    function getQuantity(prodottoId) {
+        const prodotto = cartItems.find(function cercaProdotto(item) {
+            return item.id === prodottoId;
+        });
+
+        return prodotto ? prodotto.quantita : 0;
+    }
+
+    function clearCart() {
+        setCartItems([]);
+    }
+
+    // reduce somma tutte le quantita e restituisce un solo numero.
+    const totalQuantity = cartItems.reduce(function sommaQuantita(totale, item) {
+        return totale + item.quantita;
+    }, 0);
 
     return (
         <CartContext.Provider
@@ -89,9 +106,6 @@ export function CartProvider({ children }) {
     );
 }
 
-// Hook personalizzato che semplifica l'accesso al context.
-// Invece di scrivere useContext(CartContext) in ogni componente,
-// si importa e chiama semplicemente useCart().
 export function useCart() {
     return useContext(CartContext);
 }

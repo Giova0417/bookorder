@@ -5,24 +5,40 @@ import { Link, useNavigate } from 'react-router-dom';
 import { loginUtente } from '../api/auth';
 
 function Login() {
+    // errore contiene il messaggio da mostrare se il login fallisce.
     const [errore, setErrore] = useState('');
+
+    // email e password sono input controllati:
+    // il valore scritto dall'utente viene salvato nello stato React.
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+
+    // navigate permette di cambiare pagina da codice dopo il login.
     const navigate = useNavigate();
 
-    // Chiama loginUtente che salva il JWT in localStorage e restituisce i dati dell'utente.
-    // Il reindirizzamento dipende dal ruolo: lo staff va a /staff, i clienti a /menu.
-    // In caso di errore (credenziali sbagliate, server down) mostra il messaggio per 3 secondi.
-    const handleLogin = async () => {
+    async function handleLogin() {
         try {
             setErrore('');
-            const dati = await loginUtente({ email, password });
-            navigate(dati.utente?.role === 'staff' ? '/staff' : '/menu');
+
+            // loginUtente chiama il backend e salva l'access token nel browser.
+            const dati = await loginUtente(email, password);
+
+            // Dopo il login mandiamo lo staff alla pagina staff,
+            // mentre i clienti vanno al menu.
+            if (dati.utente && dati.utente.role === 'staff') {
+                navigate('/staff');
+            } else {
+                navigate('/menu');
+            }
         } catch (error) {
+            // Se email/password sono sbagliate o il server non risponde,
+            // mostriamo il messaggio e poi lo togliamo dopo 3 secondi.
             setErrore(error.message || 'Errore di connessione al server');
-            setTimeout(() => setErrore(''), 3000);
+            setTimeout(function pulisciErrore() {
+                setErrore('');
+            }, 3000);
         }
-    };
+    }
 
     return (
         <Box sx={{

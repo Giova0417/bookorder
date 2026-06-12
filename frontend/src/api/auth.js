@@ -6,12 +6,8 @@ import {
     saveAccessToken,
 } from './client';
 
-// Funzione privata — nessun export.
-// Usa fetch diretto invece di apiFetch perché login e register sono rotte pubbliche:
-// non inviano JWT e non hanno bisogno del silent refresh.
-// credentials: 'include' è necessario: il server deve poter impostare il cookie con il refresh token nella risposta.
-// throw new Error(dati.message) trasforma gli errori del server in errori JavaScript,
-// che i componenti React intercettano nel catch e mostrano all'utente.
+// Usata per login e registrazione: sono rotte pubbliche, quindi usiamo fetch diretto
+// invece di apiFetch (che aggiunge il token e gestisce il refresh, qui non necessari).
 async function postJson(path, body) {
     const risposta = await fetch(`${API_BASE_URL}${path}`, {
         method: 'POST',
@@ -19,6 +15,7 @@ async function postJson(path, body) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
     });
+
     const dati = await readJson(risposta);
 
     if (!risposta.ok) {
@@ -28,24 +25,22 @@ async function postJson(path, body) {
     return dati;
 }
 
-// Dopo aver ricevuto la risposta, salva il JWT in localStorage con saveAccessToken.
-// Il refresh token non viene toccato — arriva come Set-Cookie nella risposta HTTP
-// e il browser lo gestisce autonomamente.
-export async function loginUtente({ email, password }) {
+// Chiama il backend, salva l'access token in localStorage e restituisce i dati utente.
+// Il refresh token viene salvato automaticamente dal browser nel cookie HttpOnly:
+// il frontend non lo vede mai, è il browser a gestirlo.
+export async function loginUtente(email, password) {
     const dati = await postJson('/api/auth/login', { email, password });
     saveAccessToken(dati.accessToken);
     return dati;
 }
 
-// La più semplice: non salva nessun token.
-// La registrazione non fa login automatico — l'utente viene reindirizzato alla pagina di login.
-export async function registraUtente({ name, email, password, role, staffCode }) {
+export async function registraUtente(name, email, password, role, staffCode) {
     return postJson('/api/auth/register', { name, email, password, role, staffCode });
 }
 
-// Usa apiFetch (non fetch diretto) perché /api/auth/me è una rotta protetta che richiede il JWT.
-// Se il token è scaduto, apiFetch lo rinnova silenziosamente e riprova.
-// Viene chiamata al mount dell'app (in Navbar) per sapere se l'utente è già loggato da una sessione precedente.
+// Rotta protetta: usa apiFetch che aggiunge l'header Authorization
+// e sa rinnovare il token automaticamente se è scaduto.
+// Usata dalla Navbar per sapere chi è l'utente loggato.
 export async function caricaUtenteCorrente() {
     const risposta = await apiFetch('/api/auth/me', { method: 'GET' });
     const dati = await readJson(risposta);
@@ -57,9 +52,9 @@ export async function caricaUtenteCorrente() {
     return dati.utente;
 }
 
-// Il finally si esegue sempre — sia se la chiamata al server va bene, sia se fallisce.
-// Questo è fondamentale: anche se il server è irraggiungibile o risponde 500,
-// il token in localStorage viene comunque cancellato e l'utente viene sloggato localmente.
+// Invalida il refresh token sul server e cancella l'access token locale.
+// Il try/catch garantisce che anche se il server non risponde,
+// l'utente venga sloggato localmente (clearAccessToken viene chiamato nel finally).
 export async function logoutUtente() {
     try {
         await fetch(`${API_BASE_URL}/api/auth/logout`, {

@@ -57,14 +57,14 @@ function DiscoverMenu() {
     // Scorre la lista di card a sinistra (direzione = -1) o a destra (direzione = 1).
     // clientWidth è la larghezza visibile del contenitore, così lo scroll
     // avanza esattamente di "quasi una pagina" indipendentemente dalla dimensione dello schermo.
-    const scorriPanini = (direzione) => {
+    function scorriPanini(direzione) {
         if (!listaPaniniRef.current) return;
 
         listaPaniniRef.current.scrollBy({
             left: direzione * listaPaniniRef.current.clientWidth * 0.9,
             behavior: 'smooth',
         });
-    };
+    }
 
     return (
         <Box sx={{

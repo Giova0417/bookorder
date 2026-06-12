@@ -5,27 +5,42 @@ import { Link, useNavigate } from 'react-router-dom';
 import { registraUtente } from '../api/auth';
 
 function Register() {
+    // Stati collegati ai campi del form.
+    // Ogni volta che l'utente scrive, React aggiorna questi valori.
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+
+    // role decide se stiamo creando un cliente o uno staff.
+    // Se role vale "staff", mostriamo anche il campo codice staff.
     const [role, setRole] = useState('cliente');
     const [staffCode, setStaffCode] = useState('');
+
+    // errore contiene il messaggio rosso da mostrare se qualcosa va male.
     const [errore, setErrore] = useState('');
+
+    // navigate serve per spostarsi alla pagina login dopo la registrazione.
     const navigate = useNavigate();
 
-    // Chiama registraUtente che crea l'account sul server.
-    // La registrazione non fa login automatico — reindirizza al login.
-    // staffCode viene inviato sempre, ma il server lo ignora se role !== 'staff'.
-    const handleRegister = async () => {
+    async function handleRegister() {
         try {
             setErrore('');
-            await registraUtente({ name, email, password, role, staffCode });
+
+            // Mandiamo i dati al backend.
+            // Il backend controlla i campi obbligatori e il codice staff.
+            await registraUtente(name, email, password, role, staffCode);
+
+            // Dopo la registrazione non facciamo login automatico:
+            // mandiamo l'utente alla pagina di login.
             navigate('/login');
         } catch (error) {
             setErrore(error.message || 'Errore di connessione al server');
-            setTimeout(() => setErrore(''), 3000);
+
+            setTimeout(function pulisciErrore() {
+                setErrore('');
+            }, 3000);
         }
-    };
+    }
 
     return (
         <Box sx={{
@@ -71,15 +86,12 @@ function Register() {
                     <TextField label="Password" value={password} onChange={(e) => setPassword(e.target.value)}
                         type="password" fullWidth variant="standard" sx={{ p: 2, background: 'rgb(255, 255, 255)', borderRadius: 5 }} />
 
-                    {/* Select per scegliere il ruolo. Il valore iniziale è 'cliente'. */}
                     <TextField select label="Tipo account" value={role} onChange={(e) => setRole(e.target.value)}
                         variant="standard" fullWidth sx={{ p: 2, background: 'rgb(255, 255, 255)', borderRadius: 5 }}>
                         <MenuItem value="cliente">Cliente</MenuItem>
                         <MenuItem value="staff">Staff</MenuItem>
                     </TextField>
 
-                    {/* Il campo codice staff appare solo se l'utente seleziona il ruolo 'staff'.
-                        Il server verifica questo codice segreto prima di creare un account staff. */}
                     {role === 'staff' && (
                         <TextField label="Codice staff" value={staffCode} onChange={(e) => setStaffCode(e.target.value)}
                             type="password" fullWidth variant="standard" sx={{ p: 2, background: 'rgb(255, 255, 255)', borderRadius: 5 }} />
