@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Button, Card, CardContent, Typography } from '@mui/material';
 import StatoBadge from './StatoBadge';
-import { formatPrice, totaleOrdine } from '../utils';
+import { formatPrice, calcolaTotale } from '../utils';
 
 // Gli stati possibili di un ordine, usati per generare i bottoni nello staff.
 const statiOrdine = ['In preparazione', 'Pronto', 'Consegnato'];
@@ -37,7 +37,7 @@ function OrdineCard({ ordine, numeroOrdine, onCambiaStato }) {
                         </Typography>
                         <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', mt: 0.5 }}>
                             {isStaff
-                                ? `ID: ${ordine._id}`
+                                ? `Orario: ${ordine.orarioTavolo || 'non indicato'}`
                                 : `${ordine.cartItems.length} ${ordine.cartItems.length === 1 ? 'prodotto' : 'prodotti'}`}
                         </Typography>
                     </Box>
@@ -77,7 +77,7 @@ function OrdineCard({ ordine, numeroOrdine, onCambiaStato }) {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: isStaff ? 2 : 0 }}>
                     <Typography sx={{ color: '#fff', fontWeight: 900 }}>Totale</Typography>
                     <Typography sx={{ color: '#ff8400', fontWeight: 900, fontSize: '20px' }}>
-                        {formatPrice(totaleOrdine(ordine))}
+                        {formatPrice(calcolaTotale(ordine.cartItems))}
                     </Typography>
                 </Box>
 

@@ -13,12 +13,13 @@ async function requestJson(path, options = {}, fallbackMessage = 'Richiesta non 
     return dati;
 }
 
-export async function creaOrdine(cartItems, numeroTavolo) {
+export async function creaOrdine(cartItems, numeroTavolo, orarioTavolo) {
     return requestJson('/api/order', {
         method: 'POST',
         body: JSON.stringify({
             cartItems,
             numeroTavolo,
+            orarioTavolo,
         }),
     }, 'Ordine non registrato. Riprova.');
 }

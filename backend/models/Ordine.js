@@ -31,6 +31,11 @@ const ordineSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+
+  orarioTavolo: {
+    type: String,
+    required: true,
+  },
 });
 
 const Ordine = mongoose.model('Ordine', ordineSchema);

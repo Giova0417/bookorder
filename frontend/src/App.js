@@ -10,6 +10,8 @@ import Register from './components/Register';
 import Cart from './components/Cart';
 import Ordini from './components/Ordini';
 import StaffOrders from './components/StaffOrders';
+import Tavoli from './components/Tavoli';
+import StaffTavoli from './components/StaffTavoli';
 import { CartProvider } from './components/CartContext';
 
 function HomePage() {
@@ -39,7 +41,9 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/ordini" element={<Ordini />} />
+            <Route path="/tavoli" element={<Tavoli />} />
             <Route path="/staff" element={<StaffOrders />} />
+            <Route path="/staff/tavoli" element={<StaffTavoli />} />
           </Routes>
         </Box>
       </BrowserRouter>

@@ -5,7 +5,6 @@ import { getAccessToken } from '../api/client';
 import { aggiornaStatoOrdineStaff, caricaOrdiniStaff } from '../api/orders';
 import { collegaRealtimeOrdini } from '../api/realtime';
 import OrdineCard from './OrdineCard';
-import { copiaOrdineConNuovoStato } from '../utils';
 
 function StaffOrders() {
     // ordini: tutti gli ordini del ristorante, aggiornati in real-time.
@@ -40,9 +39,10 @@ function StaffOrders() {
     // sull'array più aggiornato (utile con aggiornamenti real-time rapidi).
     function aggiornaOrdineLocale(ordineId, nuovoStato) {
         setOrdini(function aggiornaLista(listaCorrente) {
+            
             return listaCorrente.map(function aggiornaOrdine(ordine) {
                 if (ordine._id === ordineId) {
-                    return copiaOrdineConNuovoStato(ordine, nuovoStato);
+                    return { ...ordine, stato: nuovoStato };
                 }
                 return ordine;
             });

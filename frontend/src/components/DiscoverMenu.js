@@ -1,7 +1,5 @@
-import React, { useRef } from 'react';
-import { Box, Typography, Button, Card, CardContent, IconButton } from '@mui/material';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import React from 'react';
+import { Box, Typography, Button, Card, CardContent } from '@mui/material';
 import { Link } from 'react-router-dom';
 
 // Lista statica dei piatti in evidenza mostrati nella homepage.
@@ -49,22 +47,6 @@ const piatti = [
 ];
 
 function DiscoverMenu() {
-    // useRef crea un riferimento diretto all'elemento DOM della lista di card.
-    // Serve per chiamare .scrollBy() programmaticamente — non è possibile farlo
-    // solo con CSS/state perché dobbiamo controllare lo scroll da JavaScript.
-    const listaPaniniRef = useRef(null);
-
-    // Scorre la lista di card a sinistra (direzione = -1) o a destra (direzione = 1).
-    // clientWidth è la larghezza visibile del contenitore, così lo scroll
-    // avanza esattamente di "quasi una pagina" indipendentemente dalla dimensione dello schermo.
-    function scorriPanini(direzione) {
-        if (!listaPaniniRef.current) return;
-
-        listaPaniniRef.current.scrollBy({
-            left: direzione * listaPaniniRef.current.clientWidth * 0.9,
-            behavior: 'smooth',
-        });
-    }
 
     return (
         <Box sx={{
@@ -85,32 +67,9 @@ function DiscoverMenu() {
                         Scopri il Menu
                     </Typography>
                 </Box>
-
-                {/* I pulsanti freccia appaiono solo su mobile (xs) dove le card sono in scroll orizzontale.
-                    Su desktop (md+) le card sono visibili tutte affiancate e non serve lo scroll. */}
-                <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1 }}>
-                    <IconButton aria-label="Panino precedente" onClick={() => scorriPanini(-1)} sx={{
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(255,132,0,0.18)',
-                        border: '1px solid rgba(255,132,0,0.55)',
-                        '&:hover': { backgroundColor: '#ff8400' },
-                    }}>
-                        <ChevronLeftIcon />
-                    </IconButton>
-                    <IconButton aria-label="Panino successivo" onClick={() => scorriPanini(1)} sx={{
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(255,132,0,0.18)',
-                        border: '1px solid rgba(255,132,0,0.55)',
-                        '&:hover': { backgroundColor: '#ff8400' },
-                    }}>
-                        <ChevronRightIcon />
-                    </IconButton>
-                </Box>
             </Box>
 
-            {/* ref={listaPaniniRef} collega questo elemento al ref dichiarato sopra,
-                permettendo a scorriPanini() di chiamare .scrollBy() su di esso. */}
-            <Box ref={listaPaniniRef} sx={{
+            <Box  sx={{
                 display: { xs: 'flex', md: 'flex' },
                 gap: 2,
                 overflowX: { xs: 'auto', md: 'visible' },

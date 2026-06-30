@@ -4,28 +4,20 @@ import { createContext, useContext, useState } from 'react';
 // Lo usiamo per far leggere lo stesso carrello a Menu, Navbar e Cart.
 const CartContext = createContext(null);
 
-function creaRigaCarrello(prodotto, quantita) {
-    // Copiamo i dati del prodotto e aggiungiamo la quantita scelta.
-    return {
-        ...prodotto,
-        quantita,
-    };
-}
-
 function aggiungiProdotto(lista, prodotto) {
     const prodottoGiaPresente = lista.find(function cercaProdotto(item) {
         return item.id === prodotto.id;
     });
 
     if (!prodottoGiaPresente) {
-        return [...lista, creaRigaCarrello(prodotto, 1)];
+        return [...lista, { ...prodotto, quantita: 1 }];
     }
 
     // map crea un nuovo array.
     // Cambiamo solo il prodotto cliccato, gli altri restano uguali.
     return lista.map(function aumentaQuantita(item) {
         if (item.id === prodotto.id) {
-            return creaRigaCarrello(item, item.quantita + 1);
+            return { ...item, quantita: item.quantita + 1 };
         }
 
         return item;
@@ -50,7 +42,7 @@ function rimuoviUnaUnita(lista, prodottoId) {
 
     return lista.map(function diminuisciQuantita(item) {
         if (item.id === prodottoId) {
-            return creaRigaCarrello(item, item.quantita - 1);
+            return { ...item, quantita: item.quantita - 1 };
         }
 
         return item;

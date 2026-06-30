@@ -1,4 +1,5 @@
 const { Ordine, statiOrdine } = require('../models/Ordine');
+const { PrenotazioneTavolo } = require('../models/PrenotazioneTavolo');
 const realtimeService = require('../services/realtimeService');
 
 // Invia una notifica real-time sia al cliente che ha creato l'ordine
@@ -42,23 +43,34 @@ async function getMyOrders(req, res) {
 // Crea un nuovo ordine, lo salva nel database e avvisa staff e cliente via Socket.IO.
 async function createOrder(req, res) {
     try {
-        const { cartItems, numeroTavolo } = req.body;
+        const { cartItems, numeroTavolo, orarioTavolo } = req.body;
 
         // Validazione server-side: anche se il frontend controlla già questi campi,
         // il backend deve validare indipendentemente perché le API sono pubbliche
         // e possono essere chiamate anche senza passare dal frontend.
-        if (!numeroTavolo) {
-            return res.status(400).json({ message: 'Inserisci un tavolo' });
+        if (!numeroTavolo || !orarioTavolo) {
+            return res.status(400).json({ message: 'Seleziona una tua prenotazione' });
         }
 
         if (!cartItems || cartItems.length === 0) {
             return res.status(400).json({ message: 'Il carrello è vuoto' });
         }
 
+        const prenotazione = await PrenotazioneTavolo.findOne({
+            numeroTavolo,
+            orario: orarioTavolo,
+            idUtente: req.userId,
+        }).lean();
+
+        if (!prenotazione) {
+            return res.status(400).json({ message: 'Puoi ordinare solo da un tavolo prenotato da te' });
+        }
+
         const ordine = await Ordine.create({
             cartItems,
             idUtente: req.userId,
             numeroTavolo,
+            orarioTavolo,
         });
 
         // Avvisiamo in tempo reale: il cliente vede l'ordine confermato,

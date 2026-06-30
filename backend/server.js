@@ -14,6 +14,7 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 const authRoutes = require('./routes/auth');
 const orderRoutes = require('./routes/order');
+const tavoliRoutes = require('./routes/tavoli');
 const { initializeRealtime } = require('./services/realtimeService');
 
 const app = express();
@@ -22,14 +23,7 @@ const app = express();
 // Per questo creiamo server con http.createServer(app), invece di usare solo app.listen().
 const server = http.createServer(app);
 
-const developmentOrigins = [
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-];
-
 function normalizeOrigin(origin) {
-  // Trasforma "https://sito.com/pagina/" in "https://sito.com".
-  // Se origin non e' un URL valido, togliamo almeno gli spazi e lo slash finale.
   try {
     return new URL(origin).origin;
   } catch {
@@ -37,8 +31,6 @@ function normalizeOrigin(origin) {
   }
 }
 
-// FRONTEND_URL puo' contenere una o piu' origini separate da virgola.
-// Esempio: "https://book-order.vercel.app,http://localhost:3000".
 const allowedOrigins = [];
 const frontendUrls = (process.env.FRONTEND_URL || '').split(',');
 
@@ -50,24 +42,22 @@ for (const origin of frontendUrls) {
   }
 }
 
-// In sviluppo permettiamo anche React su localhost.
-// In produzione usiamo solo FRONTEND_URL.
-if (process.env.NODE_ENV !== 'production') {
-  for (const origin of developmentOrigins) {
-    if (!allowedOrigins.includes(origin)) {
-      allowedOrigins.push(origin);
-    }
+function isDevelopmentOrigin(origin) {
+  if (process.env.NODE_ENV === 'production') {
+    return false;
+  }
+
+  try {
+    const url = new URL(origin);
+    return url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+  } catch {
+    return false;
   }
 }
 
 const corsOptions = {
   origin(origin, callback) {
-    // Postman/curl spesso non inviano l'header Origin: li lasciamo passare.
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    if (allowedOrigins.includes(normalizeOrigin(origin))) {
+    if (!origin || allowedOrigins.includes(normalizeOrigin(origin)) || isDevelopmentOrigin(origin)) {
       return callback(null, true);
     }
 
@@ -101,6 +91,7 @@ app.get('/api/health', function health(req, res) {
 // Le rotte order diventano /api/order, /api/order/staff, ecc.
 app.use('/api/auth', authRoutes);
 app.use('/api/order', orderRoutes);
+app.use('/api/tavoli', tavoliRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)

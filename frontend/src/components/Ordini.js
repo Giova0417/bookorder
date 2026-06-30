@@ -5,7 +5,7 @@ import { getAccessToken } from '../api/client';
 import { caricaOrdiniCliente } from '../api/orders';
 import { collegaRealtimeOrdini } from '../api/realtime';
 import OrdineCard from './OrdineCard';
-import { copiaOrdineConNuovoStato, formatPrice, totaleOrdine } from '../utils';
+import { formatPrice, calcolaTotale } from '../utils';
 
 function Ordini() {
     // ordini: array degli ordini del cliente, caricato dal backend.
@@ -46,7 +46,7 @@ function Ordini() {
         setOrdini(function aggiornaLista(listaCorrente) {
             return listaCorrente.map(function aggiornaOrdine(ordine) {
                 if (ordine._id === ordineId) {
-                    return copiaOrdineConNuovoStato(ordine, nuovoStato);
+                    return { ...ordine, stato: nuovoStato };
                 }
                 return ordine;
             });
@@ -143,7 +143,7 @@ function Ordini() {
                                         {ordiniInPreparazione.map((ordine) => (
                                             <Box key={ordine._id} sx={{ p: 1.5, borderRadius: '12px', backgroundColor: '#1d1d1d', border: '1px solid rgba(255,255,255,0.06)' }}>
                                                 <Typography sx={{ color: '#fff', fontWeight: 900 }}>Ordine #{ordine.numeroOrdine}</Typography>
-                                                <Typography sx={{ color: '#ff8400', fontWeight: 900, mt: 0.5 }}>{formatPrice(totaleOrdine(ordine))}</Typography>
+                                                <Typography sx={{ color: '#ff8400', fontWeight: 900, mt: 0.5 }}>{formatPrice(calcolaTotale(ordine.cartItems))}</Typography>
                                             </Box>
                                         ))}
                                     </Box>
