@@ -26,8 +26,8 @@ function Cart() {
                 const lista = await caricaMiePrenotazioni();
                 setPrenotazioni(lista);
                 if (lista.length > 0) setPrenotazioneScelta(lista[0]._id);
-            } catch (e) {
-                console.log('Prenotazioni non caricate');
+            } catch {
+                setPrenotazioni([]);
             }
         }
 

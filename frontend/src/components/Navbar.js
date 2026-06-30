@@ -44,8 +44,7 @@ function Navbar() {
     async function handleLogout() {
         try {
             await logoutUtente();
-        } catch (errore) {
-            console.log('Logout server non disponibile');
+        } catch {
             clearAccessToken();
         }
 
