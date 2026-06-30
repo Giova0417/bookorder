@@ -20,7 +20,7 @@ export async function caricaTavoli(orario) {
 
 export async function caricaMiePrenotazioni() {
     const dati = await requestJson('/api/tavoli/mie');
-    return dati.prenotazioni || [];
+    return Array.isArray(dati) ? dati : dati.prenotazioni || [];
 }
 
 export async function prenotaTavolo(numeroTavolo, orario) {
@@ -32,11 +32,17 @@ export async function prenotaTavolo(numeroTavolo, orario) {
 
 export async function caricaPrenotazioniStaff() {
     const dati = await requestJson('/api/tavoli/staff');
-    return dati.prenotazioni || [];
+    return Array.isArray(dati) ? dati : dati.prenotazioni || [];
 }
 
 export async function eliminaPrenotazioneTavolo(prenotazioneId) {
     return requestJson(`/api/tavoli/staff/${prenotazioneId}`, {
         method: 'DELETE',
     }, 'Prenotazione non eliminata');
+}
+
+export async function eliminaMiaPrenotazione(prenotazioneId) {
+    return requestJson(`/api/tavoli/mie/${prenotazioneId}`, {
+        method: 'DELETE',
+    }, 'Impossibile annullare la prenotazione');
 }

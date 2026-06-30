@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const { PrenotazioneTavolo, numeriTavoli, orariPrenotazione } = require('../models/PrenotazioneTavolo');
 
 async function getTavoli(req, res) {
@@ -18,7 +19,7 @@ async function getTavoli(req, res) {
             return {
                 numero,
                 libero: !prenotazione,
-                miaPrenotazione: prenotazione ? prenotazione.idUtente === req.userId : false,
+                miaPrenotazione: prenotazione ? String(prenotazione.idUtente) === String(req.userId) : false,
                 prenotazione,
             };
         });
@@ -36,7 +37,7 @@ async function getMiePrenotazioni(req, res) {
             .sort({ orario: 1, numeroTavolo: 1 })
             .lean();
 
-        return res.status(200).json({ prenotazioni });
+        return res.status(200).json(prenotazioni);
     } catch (errore) {
         return res.status(500).json({ message: 'Errore nel recupero delle prenotazioni' });
     }
@@ -63,10 +64,16 @@ async function prenotaTavolo(req, res) {
             return res.status(400).json({ message: 'Tavolo o orario non valido' });
         }
 
+        // BLOCCO PRENOTAZIONI MULTIPLE: Controlla se l'utente ha già prenotato PER QUESTO ORARIO
+        const giaPrenotato = await PrenotazioneTavolo.findOne({ idUtente: req.userId, orario });
+        if (giaPrenotato) {
+            return res.status(400).json({ message: 'Hai già prenotato un tavolo per questo orario' });
+        }
+
         const occupato = await PrenotazioneTavolo.findOne({ numeroTavolo, orario });
 
         if (occupato) {
-            return res.status(409).json({ message: 'Questo tavolo e gia prenotato per questo orario' });
+            return res.status(409).json({ message: 'Questo tavolo è già prenotato per questo orario' });
         }
 
         const prenotazione = await PrenotazioneTavolo.create({
@@ -79,6 +86,28 @@ async function prenotaTavolo(req, res) {
         return res.status(201).json({ message: `Tavolo ${numeroTavolo} prenotato alle ${orario}`, prenotazione });
     } catch (errore) {
         return res.status(500).json({ message: 'Prenotazione non registrata' });
+    }
+}
+
+// FUNZIONE CLIENTE: Elimina in sicurezza solo le SUE prenotazioni
+async function annullaMiaPrenotazione(req, res) {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: 'Id prenotazione non valido' });
+        }
+
+        const prenotazione = await PrenotazioneTavolo.findOneAndDelete({
+            _id: req.params.id,
+            idUtente: req.userId,
+        });
+
+        if (!prenotazione) {
+            return res.status(404).json({ message: 'Prenotazione non trovata o non autorizzata' });
+        }
+
+        return res.status(200).json({ message: 'Prenotazione annullata' });
+    } catch (errore) {
+        return res.status(500).json({ message: 'Errore durante annullamento prenotazione' });
     }
 }
 
@@ -101,5 +130,6 @@ module.exports = {
     getMiePrenotazioni,
     getPrenotazioniStaff,
     prenotaTavolo,
+    annullaMiaPrenotazione,
     eliminaPrenotazione,
 };
